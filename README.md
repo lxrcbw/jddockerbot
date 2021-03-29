@@ -5,8 +5,10 @@
 #### 同样的也是刚开始学习PYTHON
 #### 尝试使用python写一个基于E大的dockerV3的机器人交互
 ***
-使用方法：
-将bot.py放入一个文件夹，将bot.json放入/jd/config文件夹下
+- 使用方法：
+    - 将bot.py放入一个文件夹，将bot.json放入/jd/config文件夹下
+    - 在docker内执行apk add python3
+    - 执行pip install telethon 
 ***
 - 主要实现功能：
     - /start 开始使用本程序
