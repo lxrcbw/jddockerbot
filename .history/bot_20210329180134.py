@@ -1,9 +1,16 @@
 from telethon import TelegramClient, events,Button
+import requests
 import re
 import json
+import time
 import os
+import qrcode
 from asyncio import exceptions
-
+'''
+TODO :
+1、修改config.sh文件
+2、修改定时文件 
+'''
 with open('/jd/config/bot.json') as f:
     bot = json.load(f)
 chat_id = bot['user_id']
@@ -21,12 +28,93 @@ if proxy:
 else:
     client = TelegramClient('bot', api_id, api_hash).start(bot_token=TOKEN)
 
+# 定义service.js访问
+loginurl = "http://127.0.0.1:5678/auth"
+codeurl = "http://127.0.0.1:5678/qrcode"
+cookieurl = "http://127.0.0.1:5678/cookie"
+
 date = {'username': '', 'password': ''}
 img_file = '/jd/config/qr.jpg'
 StartCMD = bot['StartCMD']
 
 def press_event(user_id):
     return events.CallbackQuery(func=lambda e: e.sender_id == user_id)
+
+
+async def login():
+    '''登录获取cookie，并进行替换'''
+    session = requests.session()
+    with open('/jd/config/auth.json') as f:
+        res = json.load(f)
+        date['username'] = res['user']
+        date['password'] = res['password']
+    flag = 160
+    res = session.post(loginurl, data=date).json()
+    res1 = session.get(codeurl).json()
+    #print (res1)
+    creatqr(res1['qrcode'])
+    msg = await client.send_message(chat_id, "请扫码", file=img_file)
+    while flag > 0:
+        res2 = session.get(cookieurl).json()
+        print(res2)
+        if res2['err'] == 0:
+            flag = 0
+            # print(res2['cookie'])
+            msg = await client.edit_message(msg, '已获取cookie,将自动替换\n'+res2['cookie'])
+        time.sleep(1)
+        flag -= 1
+    if flag == 0:
+        msg = await client.edit_message(msg, '超过时间未扫码，二维码已失效，请重新获取')
+    elif flag == -1:
+        print('-2')
+        with open('/jd/config/config.sh', 'r+') as config:
+            value = config.read()
+            # print('config')
+            #cookie = "pt_key=111225438435822555122;pt_pin=jd_HzvoWboKEyVF;"
+            newvalue = await configup(res2['cookie'], value)
+            # print('newvalue')
+        if newvalue != value:
+            # print('newvalue')
+            with open('/jd/config/config.sh', 'w') as newconfig:
+                newconfig.write(newvalue)
+                await client.edit_message(msg, '已完成替换并保存文件')
+
+
+def creatqr(text):
+    '''实例化QRCode生成qr对象'''
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=10,
+        border=4
+    )
+    qr.clear()
+    # 传入数据
+    qr.add_data(text)
+    qr.make(fit=True)
+    # 生成二维码
+    img = qr.make_image()
+    # 保存二维码
+    img.save(img_file)
+
+
+async def configup(cookie, value):
+    '''替换修改config文件cookie'''
+    pinReg = re.compile(r'pt_pin=[\S]+;')
+    pin = re.findall(pinReg, cookie)[0]
+    # print(pin)
+    cookiereg = re.compile(r'pt_key=[\S]+;'+pin)
+    # print(cookiereg)
+    oldcookie = re.findall(cookiereg, value)[0]
+    # print(oldcookie)
+    if oldcookie:
+        # print('oldcookie')
+        newvalue = value.replace(oldcookie, cookie)
+        return newvalue
+    else:
+        await client.send_message(chat_id, '未找到匹配cookie，替换失败')
+        # print('else')
+        return value
 
 def split_list(datas, n, row: bool = True):
     """一维列表转二维列表，根据N不同，生成不同级别的列表"""

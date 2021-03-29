@@ -1,0 +1,11 @@
+{
+    "user_id":918498266,
+    "bot_token":"1403378145:AAH9B8Yhb7SDtpGf9MBSkDTyX2OTOr_eCeo",
+    "api_id":"3615223",
+    "api_hash":"86a43d09b29b182d20df4d00d7251e17",
+    "proxy":true,
+    "proxy_type":"socks5", 
+    "proxy_add":"192.168.99.100", 
+    "proxy_port":5891,
+    "StartCMD":true
+}

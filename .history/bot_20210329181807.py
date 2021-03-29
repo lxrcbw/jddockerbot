@@ -1,7 +1,10 @@
 from telethon import TelegramClient, events,Button
+import requests
 import re
 import json
+import time
 import os
+import qrcode
 from asyncio import exceptions
 
 with open('/jd/config/bot.json') as f:

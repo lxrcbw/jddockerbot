@@ -1,9 +1,16 @@
 from telethon import TelegramClient, events,Button
+import requests
 import re
 import json
+import time
 import os
+import qrcode
 from asyncio import exceptions
-
+'''
+TODO :
+1、修改config.sh文件
+2、修改定时文件 
+'''
 with open('/jd/config/bot.json') as f:
     bot = json.load(f)
 chat_id = bot['user_id']
