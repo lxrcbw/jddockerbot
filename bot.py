@@ -204,12 +204,6 @@ async def cmd(cmdtext):
         await client.send_message(chat_id, '执行出错，请检查命令是否正确')
 
 
-@client.on(events.NewMessage(from_users=chat_id, pattern=r'^/getcookie'))
-async def mycookie(event):
-    '''接收/getcookie后执行程序'''
-    await login()
-
-
 @client.on(events.NewMessage(from_users=chat_id, pattern='/help'))
 async def myhelp(event):
     '''接收/help /start命令后执行程序'''
