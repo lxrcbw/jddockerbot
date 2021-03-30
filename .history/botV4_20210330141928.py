@@ -56,9 +56,9 @@ async def logbtn(conv,SENDER, path: str, content: str,msg):
             conv.cancel()
             return None,None
         elif os.path.isfile(res):
-            msg = await client.edit_message(msg, '查询日志中，请注意查收')
+            msg = await client.edit_message(msg, content + '中，请注意查收')
             await conv.send_file(res)
-            msg = await client.edit_message(msg, '查询日志'+res+'成功，请查收')
+            msg = await client.edit_message(msg, content + '成功，请查收')
             conv.cancel()
             return None,None
         else:

@@ -56,9 +56,9 @@ async def logbtn(conv,SENDER, path: str, content: str,msg):
             conv.cancel()
             return None,None
         elif os.path.isfile(res):
-            msg = await client.edit_message(msg, '查询日志中，请注意查收')
+            msg = await client.edit_message(msg, content + '中，请注意查收')
             await conv.send_file(res)
-            msg = await client.edit_message(msg, '查询日志'+res+'成功，请查收')
+            msg = await client.edit_message(msg, content + '成功，请查收')
             conv.cancel()
             return None,None
         else:
@@ -76,7 +76,7 @@ async def nodebtn(conv,SENDER, path: str, msg):
         if path == '/jd':
             dir = ['scripts','own']
         else:
-            dir = os.listdir(path).sort()
+            dir = os.listdir(path)
         markup = [Button.inline(file, data=str(path+'/'+file))
                 for file in dir]
         markup.append(Button.inline('取消', data='cancel'))
@@ -129,21 +129,20 @@ async def mysnode(event):
 async def myfile(event):
     '''定义文件操作'''
     if event.message.file:
-        filename = event.message.file.name
-        if filename == 'config.sh' or filename == 'crontab.list' or filename == 'diy.sh':
+        if event.message.file.name == 'config.sh' or event.message.file.name == 'crontab.list':
             path = '/jd/config/'
         else:
             path = '/jd/scripts/'
-        if os.path.exists(path+filename):
+        if os.path.exists(path+event.message.file.name):
             try:
-                os.rename(path+filename,path+filename+'.bak')
+                os.rename(path+event.message.file.name,path+event.message.file.name+'.bak')
             except WindowsError:
-                os.remove(path+filename+'.bak')
-                os.rename(path+filename,path+filename+'.bak')
+                os.remove(path+event.message.file.name+'.bak')
+                os.rename(path+event.message.file.name,path+event.message.file.name+'.bak')
         await client.download_media(event.message, path)
         msg = await client.send_message(chat_id, '已保存到'+path+'文件夹')
-        if filename == 'crontab.list':
-            os.popen('crontab '+path+filename)
+        if event.message.file.name == 'crontab.list':
+            os.popen('crontab '+path+event.message.file.name)
             await client.edit_message(msg,'定时文件已更新')
 
 @client.on(events.NewMessage(from_users=918498266, pattern='/bash'))
@@ -188,6 +187,7 @@ async def mycmd(event):
             msg = '''请正确使用/cmd命令，如
             /cmd python3 /python/bot.py 运行/python目录下的bot文件
             /cmd ps 获取当前docker内进行
+            /cmd kill -9 1234 立即杀死1234进程
             '''
             await client.send_message(chat_id, msg)
         else:

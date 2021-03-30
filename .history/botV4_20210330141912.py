@@ -56,9 +56,9 @@ async def logbtn(conv,SENDER, path: str, content: str,msg):
             conv.cancel()
             return None,None
         elif os.path.isfile(res):
-            msg = await client.edit_message(msg, '查询日志中，请注意查收')
+            msg = await client.edit_message(msg, content + '中，请注意查收')
             await conv.send_file(res)
-            msg = await client.edit_message(msg, '查询日志'+res+'成功，请查收')
+            msg = await client.edit_message(msg, content + '成功，请查收')
             conv.cancel()
             return None,None
         else:
@@ -188,6 +188,7 @@ async def mycmd(event):
             msg = '''请正确使用/cmd命令，如
             /cmd python3 /python/bot.py 运行/python目录下的bot文件
             /cmd ps 获取当前docker内进行
+            /cmd kill -9 1234 立即杀死1234进程
             '''
             await client.send_message(chat_id, msg)
         else:
