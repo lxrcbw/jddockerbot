@@ -77,7 +77,7 @@ async def nodebtn(conv,SENDER, path: str, msg):
         if path == '/jd':
             dir = ['scripts','own']
         else:
-            dir = os.listdir(path).sort()
+            dir = os.listdir(path)
         markup = [Button.inline(file, data=str(path+'/'+file))
                 for file in dir]
         markup.append(Button.inline('取消', data='cancel'))
@@ -91,7 +91,7 @@ async def nodebtn(conv,SENDER, path: str, msg):
             return None,None
         elif os.path.isfile(res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
-            res = res.split('/')[-1]
+            #res = res.split('/')[-1]
             print(res)
             #log = time.strftime("%Y-%m-%d-%H-%M-%S")+'.log'
             os.popen('nohup bash jtask {} now >/jd/log/bot.log &'.format(res))
@@ -121,7 +121,7 @@ async def mylog(event):
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/snode'))
 async def mysnode(event):
     SENDER = event.sender_id
-    path = '/jd/scripts'
+    path = '/jd'
     async with client.conversation(SENDER, timeout=30) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
