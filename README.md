@@ -1,9 +1,10 @@
-- BUG漫天飞
-- MAIKA永相随
-***
+
 #### 刚开始学习使用GITHUB，我是一个菜鸟
 #### 同样的也是刚开始学习PYTHON
 #### 尝试使用python写一个基于E大的dockerV3的机器人交互
+***
+- BUG漫天飞
+- MAIKA永相随
 ***
 - 使用方法：
     - 将bot.py放入一个文件夹，将bot.json放入/jd/config文件夹下
@@ -21,4 +22,4 @@
     - 此外直接发送文件，将自动保存至/jd/scripts/或/jd/config目录下，如果是config.sh，crontab.list会覆盖原文件，crontab.list文件会自动更新时间;其他文件会被保存到/jd/scripts文件夹下
 - todo:
     - snode忽略非js文件，由于tg最大支持100个按钮，需要进行排出非js文件
-    - ~~ V4更新了，还没来得及看，后期新增 ~~ V4版本已更新
+    - ~~V4更新了，还没来得及看，后期新增~~ V4版本已更新
