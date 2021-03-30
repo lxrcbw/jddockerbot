@@ -5,8 +5,10 @@
 #### 同样的也是刚开始学习PYTHON
 #### 尝试使用python写一个基于E大的dockerV3的机器人交互
 ***
-使用方法：
-将bot.py放入一个文件夹，将bot.json放入/jd/config文件夹下
+- 使用方法：
+    - 将bot.py放入一个文件夹，将bot.json放入/jd/config文件夹下
+    - 在docker内执行apk add python3
+    - 执行pip install telethon 
 ***
 - 主要实现功能：
     - /start 开始使用本程序
@@ -17,3 +19,6 @@
     - /snode 命令可以选择脚本执行，只能选择/jd/scripts目录下的脚本，选择完后直接后台运行，不影响机器人响应其他命令
     - /log 选择查看执行日志
     - 此外直接发送文件，将自动保存至/jd/scripts/或/jd/config目录下，如果是config.sh，crontab.list会覆盖原文件，crontab.list文件会自动更新时间;其他文件会被保存到/jd/scripts文件夹下
+- todo:
+    - snode忽略非js文件，由于tg最大支持100个按钮，需要进行排出非js文件
+    - V4更新了，还没来得及看，后期新增
