@@ -29,7 +29,7 @@ def press_event(user_id):
     return events.CallbackQuery(func=lambda e: e.sender_id == user_id)
 
 def split_list(datas, n, row: bool = True):
-    """一维列表转X列表，根据N不同，生成不同级别的列表"""
+    """一维列表转二维列表，根据N不同，生成不同级别的列表"""
     length = len(datas)
     size = length / n + 1 if length % n else length/n
     _datas = []
@@ -105,7 +105,7 @@ async def nodebtn(conv,SENDER, path: str, msg):
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/log'))
 async def mylog(event):
-    '''定义日志操作'''
+    # 定义日志操作
     SENDER = event.sender_id
     path = '/jd/log'
     async with client.conversation(SENDER, timeout=30) as conv:
@@ -115,7 +115,6 @@ async def mylog(event):
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/snode'))
 async def mysnode(event):
-    '''定义执行脚本操作'''
     SENDER = event.sender_id
     path = '/jd/scripts'
     async with client.conversation(SENDER, timeout=30) as conv:
@@ -125,7 +124,7 @@ async def mysnode(event):
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/getfile'))
 async def mygetfile(event):
-    '''定义获取文件操作'''
+    # 定义获取文件操作
     SENDER = event.sender_id
     path = '/jd/config'
     async with client.conversation(SENDER, timeout=30) as conv:
@@ -227,7 +226,6 @@ async def myhelp(event):
     /cmd 执行cmd命令,例如/cmd python3 /python/bot.py 则将执行python目录下的bot.py
     /snode 命令可以选择脚本执行，只能选择/jd/scripts目录下的脚本，选择完后直接后台运行，不影响机器人响应其他命令
     /log 选择查看执行日志
-    /getfile 查询config目录下文件，并发送
     此外直接发送文件，将自动保存至/jd/scripts/或/jd/config目录下，如果是config.sh，crontab.list会覆盖原文件，crontab.list文件会自动更新时间;其他文件会被保存到/jd/scripts文件夹下'''
     await client.send_message(chat_id, msg)
 
@@ -243,7 +241,6 @@ async def mystart(event):
     /cmd 执行cmd命令,例如/cmd python3 /python/bot.py 则将执行python目录下的bot.py
     /snode 命令可以选择脚本执行，只能选择/jd/scripts目录下的脚本，选择完后直接后台运行，不影响机器人响应其他命令
     /log 选择查看执行日志
-    /getfile 查询config目录下文件，并发送
     此外直接发送文件，将自动保存至/jd/scripts/或/jd/config目录下，如果是config.sh，crontab.list会覆盖原文件，crontab.list文件会自动更新时间;其他文件会被保存到/jd/scripts文件夹下'''
     await client.send_message(chat_id, msg)
 
