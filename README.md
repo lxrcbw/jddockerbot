@@ -10,7 +10,7 @@
     - 将bot.py放入一个文件夹，将bot.json放入/jd/config文件夹下
     - 在docker内执行`apk add python3`
     - 如需扫码获取cookie 需执行`apk add zlib-dev gcc jpeg-dev python3-dev musl-dev`
-    - 执行`pip install telethon python-socks[asyncio]`
+    - 执行`pip install telethon python-socks[asyncio] pillow qrcode`
 ***
 - 主要实现功能：
     - /start 开始使用本程序
@@ -24,5 +24,5 @@
 - todo:
     - snode忽略非js文件，由于tg最大支持100个按钮，需要进行排除非js文件
     - ~~V4更新了，还没来得及看，后期新增~~ V4版本已更新
-    - 扫码获取cookie
+    - ~~扫码获取cookie~~ 采用lof大佬方案
     - 一键生成提交互助码格式
