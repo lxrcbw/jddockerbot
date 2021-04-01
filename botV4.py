@@ -11,10 +11,10 @@ logging.basicConfig(
     format='%(asctime)s-%(name)s-%(levelname)s=> [%(funcName)s] %(message)s ', level=logging.INFO)
 logger = logging.getLogger(__name__)
 _JdDir = '/jd'
-_ConfigDir = _JdDir + '/config/'
-_ScriptsDir = _JdDir + '/scripts/'
-_LogDir = _JdDir + '/log/'
-_OwnDir = _JdDir +'/own/'
+_ConfigDir = _JdDir + '/config'
+_ScriptsDir = _JdDir + '/scripts'
+_LogDir = _JdDir + '/log'
+_OwnDir = _JdDir +'/own'
 # 频道id/用户id
 with open('/jd/config/bot.json') as f:
     bot = json.load(f)
