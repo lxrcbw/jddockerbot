@@ -368,7 +368,7 @@ async def myfile(event):
         logger.error('something wrong,I\'m sorry\n'+e)
 
 
-@client.on(events.NewMessage(from_users=918498266, pattern='/bash'))
+@client.on(events.NewMessage(from_users=chat_id, pattern='/bash'))
 async def mybash(event):
     '''接收/bash命令后执行程序'''
     bashreg = re.compile(r'^/bash [\S]+')
