@@ -224,6 +224,7 @@ async def logbtn(conv, SENDER, path: str, content: str, msg):
     '''定义log日志按钮'''
     try:
         dir = os.listdir(path)
+        dir.sort()
         markup = [Button.inline(file, data=str(path+'/'+file))
                   for file in dir]
         markup.append(Button.inline('取消', data='cancle'))
@@ -259,6 +260,7 @@ async def nodebtn(conv, SENDER, path: str, msg):
             dir = ['scripts', 'own']
         else:
             dir = os.listdir(path)
+        dir.sort()
         markup = [Button.inline(file, data=str(path+'/'+file))
                   for file in dir if os.path.isdir(path+'/'+file) or re.search(r'.js$', file)]
         markup.append(Button.inline('取消', data='cancel'))
@@ -294,7 +296,7 @@ async def mylog(event):
     '''定义日志文件操作'''
     SENDER = event.sender_id
     path = _LogDir
-    async with client.conversation(SENDER, timeout=30) as conv:
+    async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
             path, msg = await logbtn(conv, SENDER, path, '查询日志', msg)
@@ -305,7 +307,7 @@ async def mysnode(event):
     '''定义supernode文件命令'''  
     SENDER = event.sender_id
     path = _JdDir
-    async with client.conversation(SENDER, timeout=30) as conv:
+    async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
             path, msg = await nodebtn(conv, SENDER, path, msg)
