@@ -25,11 +25,11 @@ TOKEN = bot['bot_token']
 # my.telegram.org申请到的api_id,api_hash
 api_id = bot['api_id']
 api_hash = bot['api_hash']
+proxystart = bot['proxy']
 proxy = (bot['proxy_type'], bot['proxy_add'], bot['proxy_port'])
 # 开启tg对话
-if proxy:
-    client = TelegramClient('bot', api_id, api_hash,
-                            proxy=proxy).start(bot_token=TOKEN)
+if proxystart:
+    client = TelegramClient('bot', api_id, api_hash,proxy=proxy).start(bot_token=TOKEN)
 else:
     client = TelegramClient('bot', api_id, api_hash).start(bot_token=TOKEN)
 
