@@ -7,10 +7,11 @@
 - MAIKA永相随
 ***
 - 使用方法：
-    - 将bot.py放入一个文件夹，将bot.json放入/jd/config文件夹下
+    - 将bot.py、bot.json、rebot.sh放入/jd/config文件夹下
     - 在docker内执行`apk add python3`
     - 如需扫码获取cookie 需执行`apk add zlib-dev gcc jpeg-dev python3-dev musl-dev`
-    - 执行`pip install telethon python-socks[asyncio] pillow qrcode`
+    - 执行`pip3 install telethon python-socks[asyncio] pillow qrcode`
+    - rebot.sh 用于杀死原bot进程，后台启动新进程，建议直接环境搭建好后直接 `bash /jd/config/rebot.sh`
 ***
 - 主要实现功能：
     - /start 开始使用本程序
