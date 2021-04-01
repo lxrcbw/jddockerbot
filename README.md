@@ -10,8 +10,10 @@
     - 将bot.py、bot.json、rebot.sh放入/jd/config文件夹下
     - 在docker内执行`apk add python3`
     - 如需扫码获取cookie 需执行`apk add zlib-dev gcc jpeg-dev python3-dev musl-dev`
-    - 执行`pip3 install telethon python-socks[asyncio] pillow qrcode`
+    - 由于需要安装多个依赖包，建议将清华源设置为默认源`pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple`
+    - 执行`pip3 install telethon python-socks[asyncio] pillow qrcode requests`
     - rebot.sh 用于杀死原bot进程，后台启动新进程，建议直接环境搭建好后直接 `bash /jd/config/rebot.sh`
+    - 如果需要更换机器人token，需要将bot.session删除后，重新运行`bash /jd/config/rebot.sh`
 ***
 - 主要实现功能：
     - /start 开始使用本程序
@@ -29,5 +31,5 @@
     - ~~snode忽略非js文件，由于tg最大支持100个按钮，需要进行排除非js文件~~ 已完成
     - ~~V4更新了，还没来得及看，后期新增~~ V4版本已更新
     - ~~扫码获取cookie~~ 采用lof大佬方案
-    - 一键生成提交互助码格式
+    - 一键生成提交互助码格式 即将完成
     - 因为我还在用v3版本，v4升级的地方有哪些也没来得及研究，有错误请留言，有需要增加功能的，我可以尝试写
