@@ -427,7 +427,12 @@ async def cmd(cmdtext):
     try:
         await client.send_message(chat_id, '开始执行程序，如程序复杂，建议稍等')
         res = os.popen(cmdtext).read()
-        await client.send_message(chat_id, res)
+        if len(res) <= 4000:
+            await client.send_message(chat_id, res)
+        else:
+            with open(_LogDir+'/botres.log','w+') as f:
+                f.write(res)
+            await client.send_message(chat_id, '执行结果较长，请查看日志',file=_LogDir+'/botres.log')
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+e)
