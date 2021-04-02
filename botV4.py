@@ -275,9 +275,13 @@ async def nodebtn(conv, SENDER, path: str, msg):
         elif os.path.isfile(res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
             #res = res.split('/')[-1]
+            if 'own' in res:
+                res = 'otask ' + res
+            else:
+                res = 'jtask ' + res
             logger.info(res+'脚本即将在后台运行')
-            os.popen('nohup bash jtask {} now >/jd/log/bot.log &'.format(res))
-            msg = await client.edit_message(msg, res + '在后台运行成功，请自行在程序结束后查看日志')
+            os.popen('nohup bash {} now >/jd/log/bot.log &'.format(res))
+            msg = await client.edit_message(msg, res + '在后台运行成功\n，请自行在程序结束后查看日志')
             conv.cancel()
             return None, None
         else:
@@ -318,7 +322,7 @@ async def mygetfile(event):
     '''定义获取文件命令'''
     SENDER = event.sender_id
     path = _JdDir
-    async with client.conversation(SENDER, timeout=30) as conv:
+    async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
             path, msg = await logbtn(conv, SENDER, path, '文件发送', msg)
@@ -345,15 +349,14 @@ async def myfile(event):
                 markup.append(Button.inline('放入config', data=_ConfigDir))
                 markup.append(Button.inline('放入scripts', data=_ScriptsDir))
                 markup.append(Button.inline('放入own', data=_OwnDir))
-                markup.append(Button.inline('放入scripts并运行', data='node'))
+                markup.append(Button.inline('放入own并运行', data='node'))
                 msg = await client.edit_message(msg, '请做出你的选择：', buttons=markup)
                 date = await conv.wait_event(press_event(SENDER))
                 res = bytes.decode(date.data)
                 if res == 'node':
-                    await backfile(_OwnDir+filename)
+                    await backfile(_OwnDir+'/'+filename)
                     await client.download_media(event.message, _OwnDir)
-                    os.popen(
-                        'nohup bash jtask {} now >/jd/log/bot.log &'.format(filename))
+                    os.popen('nohup bash otask {}/{} now >/jd/log/bot.log &'.format(_OwnDir,filename))
                     await client.edit_message(msg,'脚本已保存到own文件夹，并成功在后台运行，请稍后自行查看日志')
                     conv.cancel()
                 else:
@@ -361,8 +364,9 @@ async def myfile(event):
                     await client.download_media(event.message, res)
                     await client.edit_message(msg,filename+'已保存到'+res+'文件夹')
             if filename == 'crontab.list':
-                os.popen('crontab '+res+filename)
+                os.popen('crontab '+res+'/'+filename)
                 await client.edit_message(msg, '定时文件已保存，并更新')
+                conv.cancel()
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+e)
