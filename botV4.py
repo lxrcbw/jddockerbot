@@ -373,14 +373,14 @@ async def mybash(event):
     bashreg = re.compile(r'^/bash [\S]+')
     text = re.findall(bashreg, event.raw_text)
     if len(text) == 0:
-        res = '''请正确使用/bash命令，例如
+        res = '''请正确使用/bash命令,务必使用绝对路径，例如
         /bash jup 更新脚本文件
         /bash /jd/config/diy 更新DIY文件
         /bash /abc/cde.sh 运行abc目录下的cde.sh文件
         '''
         await client.send_message(chat_id, res)
     else:
-        await cmd('bash '+text[0].replace('/bash ', ''))
+        await cmd('cd /jd && bash '+text[0].replace('/bash ', ''))
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern='/node'))
