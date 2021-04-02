@@ -274,13 +274,8 @@ async def nodebtn(conv, SENDER, path: str, msg):
             return None, None
         elif os.path.isfile(res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
-            # res = res.split('/')[-1]
-            # if 'own' in res:
-            #     res = 'otask ' + res
-            # else:
-            #     res = 'jtask ' + res
             logger.info(res+'脚本即将在后台运行')
-            os.popen('nohup bash jtask {} now >/jd/log/bot.log &'.format(res))
+            os.popen('nohup jtask {} now >/jd/log/bot.log &'.format(res))
             msg = await client.edit_message(msg, res + '在后台运行成功\n，请自行在程序结束后查看日志')
             conv.cancel()
             return None, None
@@ -356,11 +351,11 @@ async def myfile(event):
                 if res == 'node':
                     await backfile(_OwnDir+'/'+filename)
                     await client.download_media(event.message, _OwnDir)
-                    os.popen('nohup bash otask {}/{} now >/jd/log/bot.log &'.format(_OwnDir,filename))
+                    os.popen('nohup jtask {}/{} now >/jd/log/bot.log &'.format(_OwnDir,filename))
                     await client.edit_message(msg,'脚本已保存到own文件夹，并成功在后台运行，请稍后自行查看日志')
                     conv.cancel()
                 else:
-                    await backfile(res+filename)
+                    await backfile(res+'/'+filename)
                     await client.download_media(event.message, res)
                     await client.edit_message(msg,filename+'已保存到'+res+'文件夹')
             if filename == 'crontab.list':
@@ -379,9 +374,8 @@ async def mybash(event):
     text = re.findall(bashreg, event.raw_text)
     if len(text) == 0:
         res = '''请正确使用/bash命令，例如
-        /bash jd 获取jd脚本名称
-        /bash git_pull 更新脚本文件
-        /bash diy 更新DIY文件
+        /bash jup 更新脚本文件
+        /bash /jd/config/diy 更新DIY文件
         /bash /abc/cde.sh 运行abc目录下的cde.sh文件
         '''
         await client.send_message(chat_id, res)
@@ -396,13 +390,12 @@ async def mynode(event):
     text = re.findall(nodereg, event.raw_text)
     if len(text) == 0:
         res = '''请正确使用/node命令，如
-        /node jd_bean_change 运行jd_bean_change脚本
-        /node jd_jdzz 运行jd_jdzz脚本
-        /node jd_XXX 运行jd_XXX脚本
+        /node /abc/123.js 运行abc/123.js脚本
+        /node /own/abc.js 运行own/abc.js脚本
         '''
         await client.send_message(chat_id, res)
     else:
-        await cmd('bash jd '+text[0].replace('/node ', '')+' now')
+        await cmd('jtask '+text[0].replace('/node ', '')+' now')
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern='/cmd'))
@@ -413,9 +406,13 @@ async def mycmd(event):
         text = re.findall(cmdreg, event.raw_text)
         if len(text) == 0:
             msg = '''请正确使用/cmd命令，如
-            /cmd python3 /python/bot.py 运行/python目录下的bot文件
-            /cmd ps 获取当前docker内进行
-            /cmd kill -9 1234 立即杀死1234进程
+            /cmd jtask   # 运行scripts脚本
+            /cmd otask   # 运行own脚本 绝对路径
+            /cmd mtask   # 运行你自己的脚本，如果某些own脚本识别不出来cron，你也可以自行添加mtask任务
+            /cmd jlog    # 删除旧日志
+            /cmd jup     # 更新所有脚本
+            /cmd jcode   # 导出所有互助码
+            /cmd jcsv    # 记录豆豆变化情况
             '''
             await client.send_message(chat_id, msg)
         else:
@@ -452,14 +449,13 @@ async def mystart(event):
     '''接收/help /start命令后执行程序'''
     msg = '''使用方法如下：
     /start 开始使用本程序
-    /help 查看使用帮助
     /bash 执行bash程序，如git_pull、diy及可执行自定义.sh，例如/bash /jd/config/abcd.sh
     /node 执行js脚本文件，目前仅支持/scirpts、/config目录下js，直接输入/node jd_bean_change 即可进行执行。该命令会等待脚本执行完，期间不能使用机器人，建议使用snode命令。
     /cmd 执行cmd命令,例如/cmd python3 /python/bot.py 则将执行python目录下的bot.py
     /snode 命令可以选择脚本执行，只能选择/jd/scripts目录下的脚本，选择完后直接后台运行，不影响机器人响应其他命令
     /log 选择查看执行日志
-    /getfile 获取config目录下文件
-    /getcookie 扫码获取cookie
+    /getfile 获取jd目录下文件
+    /getcookie 扫码获取cookie 期间不能进行其他交互
     此外直接发送文件，会让你选择保存到哪个文件夹，如果选择运行，将保存至scripts目录下，并立即运行脚本
     crontab.list文件会自动更新时间;其他文件会被保存到/jd/scripts文件夹下'''
     await client.send_message(chat_id, msg)

@@ -344,14 +344,14 @@ async def myfile(event):
                 date = await conv.wait_event(press_event(SENDER))
                 res = bytes.decode(date.data)
                 if res == 'node':
-                    await backfile(_ScriptsDir+filename)
+                    await backfile(_ScriptsDir+'/'+filename)
                     await client.download_media(event.message, _ScriptsDir)
                     os.popen(
                         'nohup bash jd {} now >/jd/log/bot.log &'.format(filename))
                     await client.edit_message(msg,'脚本已保存到scripts文件夹，并成功在后台运行，请稍后自行查看日志')
                     conv.cancel()
                 else:
-                    await backfile(res+filename)
+                    await backfile(res+'/'+filename)
                     await client.download_media(event.message, res)
                     await client.edit_message(msg,filename+'已保存到'+res+'文件夹')
             if filename == 'crontab.list':
