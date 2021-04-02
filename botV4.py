@@ -249,7 +249,7 @@ async def logbtn(conv, SENDER, path: str, content: str, msg):
         return None, None
     except Exception as e:
         msg = await client.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
-        logger.error('something wrong,I\'m sorry\n'+e)
+        logger.error('something wrong,I\'m sorry\n'+str(e))
         return None, None
 
 
@@ -364,7 +364,7 @@ async def myfile(event):
                 conv.cancel()
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
-        logger.error('something wrong,I\'m sorry\n'+e)
+        logger.error('something wrong,I\'m sorry\n'+str(e))
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern='/bash'))
@@ -406,13 +406,11 @@ async def mycmd(event):
         text = re.findall(cmdreg, event.raw_text)
         if len(text) == 0:
             msg = '''请正确使用/cmd命令，如
-            /cmd jtask   # 运行scripts脚本
-            /cmd otask   # 运行own脚本 绝对路径
-            /cmd mtask   # 运行你自己的脚本，如果某些own脚本识别不出来cron，你也可以自行添加mtask任务
             /cmd jlog    # 删除旧日志
             /cmd jup     # 更新所有脚本
             /cmd jcode   # 导出所有互助码
             /cmd jcsv    # 记录豆豆变化情况
+            不建议直接使用cmd命令执行脚本，请使用/node或/snode
             '''
             await client.send_message(chat_id, msg)
         else:
@@ -427,6 +425,8 @@ async def cmd(cmdtext):
     try:
         await client.send_message(chat_id, '开始执行程序，如程序复杂，建议稍等')
         res = os.popen(cmdtext).read()
+        if len(res) == 0:
+            await client.send_message(chat_id, '已执行，但返回值为空')
         if len(res) <= 4000:
             await client.send_message(chat_id, res)
         else:
@@ -435,7 +435,7 @@ async def cmd(cmdtext):
             await client.send_message(chat_id, '执行结果较长，请查看日志',file=_LogDir+'/botres.log')
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
-        logger.error('something wrong,I\'m sorry\n'+e)
+        logger.error('something wrong,I\'m sorry'+str(e))
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/getcookie'))
@@ -445,7 +445,7 @@ async def mycookie(event):
         await get_jd_cookie()
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
-        logger.error('something wrong,I\'m sorry\n'+e)
+        logger.error('something wrong,I\'m sorry\n'+str(e))
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern='/help'))
