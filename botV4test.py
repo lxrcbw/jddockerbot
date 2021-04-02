@@ -11,9 +11,10 @@ logging.basicConfig(
     format='%(asctime)s-%(name)s-%(levelname)s=> [%(funcName)s] %(message)s ', level=logging.INFO)
 logger = logging.getLogger(__name__)
 _JdDir = '/jd'
-_ConfigDir = _JdDir + '/config/'
-_ScriptsDir = _JdDir + '/scripts/'
-_LogDir = _JdDir + '/log/'
+_ConfigDir = _JdDir + '/config'
+_ScriptsDir = _JdDir + '/scripts'
+_LogDir = _JdDir + '/log'
+_OwnDir = _JdDir +'/own'
 # 频道id/用户id
 with open('/jd/config/bot.json') as f:
     bot = json.load(f)
@@ -255,7 +256,10 @@ async def logbtn(conv, SENDER, path: str, content: str, msg):
 async def nodebtn(conv, SENDER, path: str, msg):
     '''定义scripts脚本按钮'''
     try:
-        dir = os.listdir(path)
+        if path == '/jd':
+            dir = ['scripts', 'own']
+        else:
+            dir = os.listdir(path)
         dir.sort()
         markup = [Button.inline(file, data=str(path+'/'+file))
                   for file in dir if os.path.isdir(path+'/'+file) or re.search(r'.js$', file)]
@@ -270,10 +274,9 @@ async def nodebtn(conv, SENDER, path: str, msg):
             return None, None
         elif os.path.isfile(res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
-            res = res.split('/')[-1]
             logger.info(res+'脚本即将在后台运行')
-            os.popen('nohup bash jd {} now >/jd/log/bot.log &'.format(res))
-            msg = await client.edit_message(msg, res + '在后台运行成功，请自行在程序结束后查看日志')
+            os.popen('nohup jtask {} now >/jd/log/bot.log &'.format(res))
+            msg = await client.edit_message(msg, res + '在后台运行成功\n，请自行在程序结束后查看日志')
             conv.cancel()
             return None, None
         else:
@@ -300,8 +303,9 @@ async def mylog(event):
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/snode'))
 async def mysnode(event):
+    '''定义supernode文件命令'''  
     SENDER = event.sender_id
-    path = _ScriptsDir
+    path = _JdDir
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
@@ -313,7 +317,7 @@ async def mygetfile(event):
     '''定义获取文件命令'''
     SENDER = event.sender_id
     path = _JdDir
-    async with client.conversation(SENDER, timeout=30) as conv:
+    async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
             path, msg = await logbtn(conv, SENDER, path, '文件发送', msg)
@@ -339,24 +343,25 @@ async def myfile(event):
                 msg = await conv.send_message('请选择您要放入的文件夹或操作：\n')
                 markup.append(Button.inline('放入config', data=_ConfigDir))
                 markup.append(Button.inline('放入scripts', data=_ScriptsDir))
-                markup.append(Button.inline('放入scripts并运行', data='node'))
+                markup.append(Button.inline('放入own', data=_OwnDir))
+                markup.append(Button.inline('放入own并运行', data='node'))
                 msg = await client.edit_message(msg, '请做出你的选择：', buttons=markup)
                 date = await conv.wait_event(press_event(SENDER))
                 res = bytes.decode(date.data)
                 if res == 'node':
-                    await backfile(_ScriptsDir+'/'+filename)
-                    await client.download_media(event.message, _ScriptsDir)
-                    os.popen(
-                        'nohup bash jd {} now >/jd/log/bot.log &'.format(filename))
-                    await client.edit_message(msg,'脚本已保存到scripts文件夹，并成功在后台运行，请稍后自行查看日志')
+                    await backfile(_OwnDir+'/'+filename)
+                    await client.download_media(event.message, _OwnDir)
+                    os.popen('nohup jtask {}/{} now >/jd/log/bot.log &'.format(_OwnDir,filename))
+                    await client.edit_message(msg,'脚本已保存到own文件夹，并成功在后台运行，请稍后自行查看日志')
                     conv.cancel()
                 else:
                     await backfile(res+'/'+filename)
                     await client.download_media(event.message, res)
                     await client.edit_message(msg,filename+'已保存到'+res+'文件夹')
             if filename == 'crontab.list':
-                os.popen('crontab '+res+filename)
+                os.popen('crontab '+res+'/'+filename)
                 await client.edit_message(msg, '定时文件已保存，并更新')
+                conv.cancel()
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+e)
@@ -369,9 +374,8 @@ async def mybash(event):
     text = re.findall(bashreg, event.raw_text)
     if len(text) == 0:
         res = '''请正确使用/bash命令，例如
-        /bash jd 获取jd脚本名称
-        /bash git_pull 更新脚本文件
-        /bash /jd/diy 更新DIY文件
+        /bash jup 更新脚本文件
+        /bash /jd/config/diy 更新DIY文件
         /bash /abc/cde.sh 运行abc目录下的cde.sh文件
         '''
         await client.send_message(chat_id, res)
@@ -386,13 +390,12 @@ async def mynode(event):
     text = re.findall(nodereg, event.raw_text)
     if len(text) == 0:
         res = '''请正确使用/node命令，如
-        /node jd_bean_change 运行jd_bean_change脚本
-        /node jd_jdzz 运行jd_jdzz脚本
-        /node jd_XXX 运行jd_XXX脚本
+        /node /abc/123.js 运行abc/123.js脚本
+        /node /own/abc.js 运行own/abc.js脚本
         '''
         await client.send_message(chat_id, res)
     else:
-        await cmd('bash jd '+text[0].replace('/node ', '')+' now')
+        await cmd('jtask '+text[0].replace('/node ', '')+' now')
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern='/cmd'))
@@ -403,8 +406,13 @@ async def mycmd(event):
         text = re.findall(cmdreg, event.raw_text)
         if len(text) == 0:
             msg = '''请正确使用/cmd命令，如
-            /cmd python3 /python/bot.py 运行/python目录下的bot文件
-            /cmd ps 获取当前docker内进行
+            /cmd jtask   # 运行scripts脚本
+            /cmd otask   # 运行own脚本 绝对路径
+            /cmd mtask   # 运行你自己的脚本，如果某些own脚本识别不出来cron，你也可以自行添加mtask任务
+            /cmd jlog    # 删除旧日志
+            /cmd jup     # 更新所有脚本
+            /cmd jcode   # 导出所有互助码
+            /cmd jcsv    # 记录豆豆变化情况
             '''
             await client.send_message(chat_id, msg)
         else:
@@ -439,20 +447,90 @@ async def mycookie(event):
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+e)
 
+def getcodes(str,list):
+    codes=[code.split('=\'')[-1] for code in list if str in code]
+    return codes
+def gencodefile():
+    os.popen('jcode')
+    _codedir = '/jd/log/export_sharecodes/'
+    dir = os.listdir(_codedir)
+    dir.sort(reverse = True)
+    log = dir[-1]
+    with open(log) as f:
+        types = f.readlines()
+    mycode=[code for code in types if 'My' in code and 'For' not in code]
+    myreg=re.compile(r'My[\S]+?[1-5]=[\S]*[A-Za-z0-9]')
+    mycodes=[]
+    for code in mycode:
+        code = ''.join(re.findall(myreg,code))
+        if code != '':
+            mycodes.append(code)
+    with open('/jd/log/botcodes.log','w+') as f:
+        for code in mycodes:
+            f.writelines(code)
+
+@client.on(events.NewMessage(from_users=chat_id, pattern=r'^/getcodes'))
+async def mycodes(event):
+    '''接收/getcodes后执行程序'''
+    try:
+        SENDER = event.sender_id
+        msg = await client.send_message(chat_id,'正在查询请稍后')
+        async with client.conversation(SENDER, timeout=30) as conv:
+            os.popen('jcode')
+            _codedir = '/jd/log/export_sharecodes/'
+            dir = os.listdir(_codedir)
+            dir.sort(reverse = True)
+            log = dir[-1]
+            with open(log) as f:
+                types = f.readlines()
+            codes = [type for type in types if 'My' in type and 'For' not in type]
+            myreg=re.compile(r'My[\S]+?[1]=[\S]*[A-Za-z0-9]')
+            mycodes = []
+            for code in codes:
+                code = ''.join(re.findall(myreg,code))
+                if code != '':
+                    mycodes.append(code.split('=')[-1])
+            markup = [Button.inline(code, data=str(code)) for code in mycodes]
+            markup.append(Button.inline('全部', data='all'))
+            markup.append(Button.inline('取消', data='cancel'))
+            markup = split_list(markup, 3)
+            msg = await client.edit_message(msg, '请做出你的选择：', buttons=markup)
+            date = await conv.wait_event(press_event(SENDER))
+            res = bytes.decode(date.data)
+            if res == 'cancle':
+                msg = await client.edit_message(msg, '对话已取消')
+                conv.cancel()
+            elif res == 'all':
+                for code in mycodes:
+                    if 'MyCash' in code or 'MyJoy' in code or 'MyJdzz' in code:
+                        await conv.send_message('/submit_activity_codes sgmh '+'&'.join(getcodes(code,getcode())))
+                    else:
+                        await conv.send_message('/submit_activity_codes sgmh '+'&'.join(getcodes(code,getcode())))
+                conv.cancel()
+            else:
+                await conv.send_message()
+    except exceptions.TimeoutError:
+            msg = await client.edit_message(msg, '选择已超时，对话已停止')
+            return None, None
+    except Exception as e:
+        msg = await client.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
+        logger.error('something wrong,I\'m sorry\n'+e)
+        return None, None
+
+
 @client.on(events.NewMessage(from_users=chat_id, pattern='/help'))
 @client.on(events.NewMessage(from_users=chat_id, pattern='/start'))
 async def mystart(event):
     '''接收/help /start命令后执行程序'''
     msg = '''使用方法如下：
     /start 开始使用本程序
-    /help 查看使用帮助
     /bash 执行bash程序，如git_pull、diy及可执行自定义.sh，例如/bash /jd/config/abcd.sh
     /node 执行js脚本文件，目前仅支持/scirpts、/config目录下js，直接输入/node jd_bean_change 即可进行执行。该命令会等待脚本执行完，期间不能使用机器人，建议使用snode命令。
     /cmd 执行cmd命令,例如/cmd python3 /python/bot.py 则将执行python目录下的bot.py
     /snode 命令可以选择脚本执行，只能选择/jd/scripts目录下的脚本，选择完后直接后台运行，不影响机器人响应其他命令
     /log 选择查看执行日志
-    /getfile 获取config目录下文件
-    /getcookie 扫码获取cookie
+    /getfile 获取jd目录下文件
+    /getcookie 扫码获取cookie 期间不能进行其他交互
     此外直接发送文件，会让你选择保存到哪个文件夹，如果选择运行，将保存至scripts目录下，并立即运行脚本
     crontab.list文件会自动更新时间;其他文件会被保存到/jd/scripts文件夹下'''
     await client.send_message(chat_id, msg)
