@@ -410,7 +410,7 @@ async def cmd(cmdtext):
         res = os.popen(cmdtext).read()
         if len(res) == 0:
             await client.send_message(chat_id, '已执行，但返回值为空')
-        if len(res) <= 4000:
+        elif len(res) <= 4000:
             await client.send_message(chat_id, res)
         else:
             with open(_LogDir+'/botres.log','w+') as f:
