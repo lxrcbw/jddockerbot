@@ -274,13 +274,13 @@ async def nodebtn(conv, SENDER, path: str, msg):
             return None, None
         elif os.path.isfile(res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
-            #res = res.split('/')[-1]
-            if 'own' in res:
-                res = 'otask ' + res
-            else:
-                res = 'jtask ' + res
+            # res = res.split('/')[-1]
+            # if 'own' in res:
+            #     res = 'otask ' + res
+            # else:
+            #     res = 'jtask ' + res
             logger.info(res+'脚本即将在后台运行')
-            os.popen('nohup bash {} now >/jd/log/bot.log &'.format(res))
+            os.popen('nohup bash jtask {} now >/jd/log/bot.log &'.format(res))
             msg = await client.edit_message(msg, res + '在后台运行成功\n，请自行在程序结束后查看日志')
             conv.cancel()
             return None, None
