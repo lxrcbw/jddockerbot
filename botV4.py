@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# _*_ coding:utf-8 _*_
+
+# author: https://github.com/SuMaiKaDe
+
 from telethon import TelegramClient, events, Button
 import requests
 import re
@@ -275,7 +280,7 @@ async def nodebtn(conv, SENDER, path: str, msg):
         elif os.path.isfile(res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
             logger.info(res+'脚本即将在后台运行')
-            os.popen('nohup /jd/jtask.sh {} now >/jd/log/bot.log &'.format(res))
+            os.popen('/jd/jtask.sh {} now >/jd/log/bot.log &'.format(res))
             msg = await client.edit_message(msg, res + '在后台运行成功\n，请自行在程序结束后查看日志')
             conv.cancel()
             return None, None
@@ -351,7 +356,7 @@ async def myfile(event):
                 if res == 'node':
                     await backfile(_OwnDir+'/'+filename)
                     await client.download_media(event.message, _OwnDir)
-                    os.popen('nohup jtask {}/{} now >/jd/log/bot.log &'.format(_OwnDir,filename))
+                    os.popen('jtask {}/{} now >/jd/log/bot.log &'.format(_OwnDir,filename))
                     await client.edit_message(msg,'脚本已保存到own文件夹，并成功在后台运行，请稍后自行查看日志')
                     conv.cancel()
                 else:
@@ -437,8 +442,8 @@ async def mystart(event):
     '''接收/help /start命令后执行程序'''
     msg = '''使用方法如下：
     /start 开始使用本程序
-    /node 执行js脚本文件，目前仅支持/scirpts、/config目录下js，直接输入/node jd_bean_change 即可进行执行。该命令会等待脚本执行完，期间不能使用机器人，建议使用snode命令。
-    /cmd 执行cmd命令,例如/cmd python3 /python/bot.py 则将执行python目录下的bot.py
+    /node 执行js脚本文件，直接输入/node jd_bean_change 如执行其他自己js，需输入绝对路径。即可进行执行。该命令会等待脚本执行完，期间不能使用机器人，建议使用snode命令。
+    /cmd 执行cmd命令,例如/cmd python3 /python/bot.py 则将执行python目录下的bot.py 不建议使用机器人使用并发，可能产生不明原因的崩溃
     /snode 命令可以选择脚本执行，只能选择/jd/scripts目录下的脚本，选择完后直接后台运行，不影响机器人响应其他命令
     /log 选择查看执行日志
     /getfile 获取jd目录下文件
