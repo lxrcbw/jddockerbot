@@ -1,4 +1,4 @@
-
+#去my.telegram.org获取api_id api_hash千万不要点错成delete账户！！！！
 #### 刚开始学习使用GITHUB，我是一个菜鸟
 #### 同样的也是刚开始学习PYTHON
 #### 尝试使用python写一个基于E大的dockerV3的机器人交互
