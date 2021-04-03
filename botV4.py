@@ -196,19 +196,31 @@ def creatqr(text):
     img.save(img_file)
 
 
-async def get_jd_cookie():
+async def get_jd_cookie(SENDER):
     getSToken()
     getOKLToken()
     url = 'https://plogin.m.jd.com/cgi-bin/m/tmauth?appid=300&client_type=m&token='+token
     creatqr(url)
-    msg = await client.send_message(chat_id, '请扫码', file=img_file)
-    return_msg = chekLogin()
-    if return_msg == 0:
-        await client.edit_message(msg, 'cookie获取成功:\n'+jd_cookie)
-    elif return_msg == 21:
-        await client.edit_message(msg, '二维码已失效，请重新获取')
-    else:
-        await client.edit_message(msg, 'something wrong')
+    async with client.conversation(SENDER, timeout=60) as conv:
+        markup = [Button.inline("取消", data='cancel')]
+        markup = split_list(markup, 1)
+        msg = await client.send_message(chat_id, '请扫码', file=img_file, buttons=markup)
+        date = await conv.wait_event(press_event(SENDER))
+        res = bytes.decode(date.data)
+        if res == 'cancel':
+            msg = await msg.delete()
+            await client.send_message(chat_id, '对话已取消')
+            conv.cancel()
+            return
+        else:
+            msg = await msg.delete()
+            return_msg = chekLogin()
+            if return_msg == 0:
+                await client.send_message(chat_id, 'cookie获取成功:\n'+jd_cookie)
+            elif return_msg == 21:
+                await client.send_message(chat_id, '二维码已失效，请重新获取')
+            else:
+                await client.send_message(chat_id, 'something wrong')
 
 
 def split_list(datas, n, row: bool = True):
@@ -430,7 +442,8 @@ async def cmd(cmdtext):
 async def mycookie(event):
     '''接收/getcookie后执行程序'''
     try:
-        await get_jd_cookie()
+        SENDER = event.sender_id
+        await get_jd_cookie(SENDER)
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
