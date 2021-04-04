@@ -220,8 +220,12 @@ async def getname(path,dir):
         if os.path.isdir(path+'/'+file):
             names.append(file)
         else:
-            with open(path+'/'+file) as f:
-                resdatas = f.readlines()
+            try:
+                with open(path+'/'+file,'r',encoding='utf-8') as f:
+                    resdatas = f.readlines()
+            except:
+                with open(path+'/'+file,'r',encoding='gbk') as f:
+                    resdatas = f.readlines()
             for data in resdatas:
                 if 'new Env' in data:
                     res = re.findall(reg,data)
