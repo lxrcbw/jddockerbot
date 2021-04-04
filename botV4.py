@@ -223,9 +223,10 @@ async def getname(path, dir):
                 resdatas = f.readlines()
             for data in resdatas:
                 if 'new Env' in data:
+                    data.replace('\"','\'')
                     res = re.findall(reg, data)
                     if len(res) != 0:
-                        res = res[0].replace('\"', '\'').split('\'')[-2]
+                        res = res[0].split('\'')[-2]
                         names.append(res+'--->'+file)
                     break
         else:
