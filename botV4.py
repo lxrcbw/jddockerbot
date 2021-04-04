@@ -19,7 +19,7 @@ _JdDir = '/jd'
 _ConfigDir = _JdDir + '/config'
 _ScriptsDir = _JdDir + '/scripts'
 _LogDir = _JdDir + '/log'
-_OwnDir = _JdDir +'/own'
+_OwnDir = _JdDir + '/own'
 # 频道id/用户id
 with open('/jd/config/bot.json') as f:
     bot = json.load(f)
@@ -34,14 +34,18 @@ proxystart = bot['proxy']
 proxy = (bot['proxy_type'], bot['proxy_add'], bot['proxy_port'])
 # 开启tg对话
 if proxystart:
-    client = TelegramClient('bot', api_id, api_hash,proxy=proxy).start(bot_token=TOKEN)
+    client = TelegramClient('bot', api_id, api_hash,
+                            proxy=proxy).start(bot_token=TOKEN)
 else:
     client = TelegramClient('bot', api_id, api_hash).start(bot_token=TOKEN)
-cookiemsg =''
+cookiemsg = ''
 img_file = '/jd/config/qr.jpg'
 StartCMD = bot['StartCMD']
+
+
 def press_event(user_id):
     return events.CallbackQuery(func=lambda e: e.sender_id == user_id)
+
 
 # 扫码获取cookie 直接采用LOF大佬代码
 # getSToken请求获取，s_token用于发送post请求是的必须参数
@@ -132,13 +136,6 @@ def parsePostRespCookie(headers, data):
     logger.info("okl_token:" + okl_token)
 
 
-def chekLogin():
-    
-    global login
-    
-        
-
-
 def parseJDCookies(headers):
     global jd_cookie
     logger.info("扫码登录成功，下面为获取到的用户Cookie。")
@@ -166,6 +163,7 @@ def creatqr(text):
     img = qr.make_image()
     # 保存二维码
     img.save(img_file)
+
 
 def split_list(datas, n, row: bool = True):
     """一维列表转二维列表，根据N不同，生成不同级别的列表"""
@@ -200,7 +198,7 @@ async def logbtn(conv, SENDER, path: str, content: str, msg):
         elif os.path.isfile(res):
             msg = await client.edit_message(msg, content + '中，请注意查收')
             await conv.send_file(res)
-            msg = await client.edit_message(msg, res+ content + '成功，请查收')
+            msg = await client.edit_message(msg, res + content + '成功，请查收')
             conv.cancel()
             return None, None
         else:
@@ -213,23 +211,27 @@ async def logbtn(conv, SENDER, path: str, content: str, msg):
         logger.error('something wrong,I\'m sorry\n'+str(e))
         return None, None
 
-async def getname(path,dir):
-    names=[]
+
+async def getname(path, dir):
+    names = []
     reg = r'new Env\(\'[\S]+?\'\)'
     for file in dir:
         if os.path.isdir(path+'/'+file):
             names.append(file)
-        else:
-            with open(path+'/'+file,'r',encoding='utf-8-sig') as f:
+        elif file.endswith('.js'):
+            with open(path+'/'+file, 'r', encoding='utf-8') as f:
                 resdatas = f.readlines()
             for data in resdatas:
                 if 'new Env' in data:
-                    res = re.findall(reg,data)
+                    res = re.findall(reg, data)
                     if len(res) != 0:
-                        res = res[0].replace('\"','\'').split('\'')[-2]
-                        names.append(res+'-'+file)
+                        res = res[0].replace('\"', '\'').split('\'')[-2]
+                        names.append(res+'--->'+file)
                     break
+        else:
+            continue
     return names
+
 
 async def nodebtn(conv, SENDER, path: str, msg):
     '''定义scripts脚本按钮'''
@@ -238,10 +240,10 @@ async def nodebtn(conv, SENDER, path: str, msg):
             dir = ['scripts', 'own']
         else:
             dir = os.listdir(path)
-            dir = await getname(path,dir)
+            dir = await getname(path, dir)
         dir.sort()
-        markup = [Button.inline(file.split('-')[0], data=str(path+'/'+file.split('-')[-1]))
-                  for file in dir if os.path.isdir(path+'/'+file) or re.search(r'.js$', file.split('-')[-1])]
+        markup = [Button.inline(file.split('--->')[0], data=str(path+'/'+file.split('--->')[-1]))
+                  for file in dir if os.path.isdir(path+'/'+file) or re.search(r'.js$', file.split('--->')[-1])]
         markup.append(Button.inline('取消', data='cancel'))
         markup = split_list(markup, 3)
         msg = await client.edit_message(msg, '请做出你的选择：', buttons=markup)
@@ -268,6 +270,7 @@ async def nodebtn(conv, SENDER, path: str, msg):
         logger.error('something wrong,I\'m sorry\n'+str(e))
         return None, None
 
+
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/log'))
 async def mylog(event):
     '''定义日志文件操作'''
@@ -281,7 +284,7 @@ async def mylog(event):
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/snode'))
 async def mysnode(event):
-    '''定义supernode文件命令'''  
+    '''定义supernode文件命令'''
     SENDER = event.sender_id
     path = _JdDir
     async with client.conversation(SENDER, timeout=60) as conv:
@@ -299,6 +302,7 @@ async def mygetfile(event):
         msg = await conv.send_message('正在查询，请稍后')
         while path:
             path, msg = await logbtn(conv, SENDER, path, '文件发送', msg)
+
 
 async def backfile(file):
     if os.path.exists(file):
@@ -329,13 +333,14 @@ async def myfile(event):
                 if res == 'node':
                     await backfile(_OwnDir+'/'+filename)
                     await client.download_media(event.message, _OwnDir)
-                    os.popen('jtask {}/{} now >/jd/log/bot.log &'.format(_OwnDir,filename))
-                    await client.edit_message(msg,'脚本已保存到own文件夹，并成功在后台运行，请稍后自行查看日志')
+                    os.popen(
+                        'jtask {}/{} now >/jd/log/bot.log &'.format(_OwnDir, filename))
+                    await client.edit_message(msg, '脚本已保存到own文件夹，并成功在后台运行，请稍后自行查看日志')
                     conv.cancel()
                 else:
                     await backfile(res+'/'+filename)
                     await client.download_media(event.message, res)
-                    await client.edit_message(msg,filename+'已保存到'+res+'文件夹')
+                    await client.edit_message(msg, filename+'已保存到'+res+'文件夹')
             if filename == 'crontab.list':
                 os.popen('crontab '+res+'/'+filename)
                 await client.edit_message(msg, '定时文件已保存，并更新')
@@ -345,6 +350,7 @@ async def myfile(event):
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
+
 
 @client.on(events.NewMessage(from_users=chat_id, pattern='/node'))
 async def mynode(event):
@@ -393,9 +399,9 @@ async def cmd(cmdtext):
         elif len(res) <= 4000:
             await client.send_message(chat_id, res)
         else:
-            with open(_LogDir+'/botres.log','w+') as f:
+            with open(_LogDir+'/botres.log', 'w+') as f:
                 f.write(res)
-            await client.send_message(chat_id, '执行结果较长，请查看日志',file=_LogDir+'/botres.log')
+            await client.send_message(chat_id, '执行结果较长，请查看日志', file=_LogDir+'/botres.log')
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry'+str(e))
@@ -405,7 +411,7 @@ async def cmd(cmdtext):
 async def mycookie(event):
     '''接收/getcookie后执行程序'''
     login = True
-    msg = await client.send_message(chat_id,'正在获取二维码，请稍后')
+    msg = await client.send_message(chat_id, '正在获取二维码，请稍后')
     global cookiemsg
     try:
         SENDER = event.sender_id
@@ -414,18 +420,19 @@ async def mycookie(event):
             getOKLToken()
             url = 'https://plogin.m.jd.com/cgi-bin/m/tmauth?appid=300&client_type=m&token='+token
             creatqr(url)
-            markup = [Button.inline("已扫码", data='confirm'),Button.inline("取消", data='cancel')]
-            await client.delete_messages(chat_id,msg)
-            cookiemsg = await client.send_message(chat_id, '30s内点击取消将取消本次操作\n如不取消，扫码结果将于30s后显示\n扫码后不想等待点击已扫码', file=img_file,buttons=markup)
+            markup = [Button.inline("已扫码", data='confirm'),
+                      Button.inline("取消", data='cancel')]
+            await client.delete_messages(chat_id, msg)
+            cookiemsg = await client.send_message(chat_id, '30s内点击取消将取消本次操作\n如不取消，扫码结果将于30s后显示\n扫码后不想等待点击已扫码', file=img_file, buttons=markup)
             convdata = await conv.wait_event(press_event(SENDER))
             res = bytes.decode(convdata.data)
             if res == 'cancel':
                 login = False
-                await client.delete_messages(chat_id,cookiemsg)
+                await client.delete_messages(chat_id, cookiemsg)
                 msg = await conv.send_message('对话已取消')
                 conv.cancel()
             else:
-                raise exceptions.TimeoutError() 
+                raise exceptions.TimeoutError()
     except exceptions.TimeoutError:
         expired_time = time.time() + 60 * 2
         while login:
@@ -453,18 +460,18 @@ async def mycookie(event):
             data = resp.json()
             if data.get("errcode") == 0:
                 parseJDCookies(resp.headers)
-                await client.delete_messages(chat_id,cookiemsg)
+                await client.delete_messages(chat_id, cookiemsg)
                 await client.send_message(chat_id, '以下为获取到的cookie')
                 await client.send_message(chat_id, jd_cookie)
                 return
             if data.get("errcode") == 21:
-                await client.delete_messages(chat_id,cookiemsg)
+                await client.delete_messages(chat_id, cookiemsg)
                 await client.send_message(chat_id, '发生了某些错误\n'+data.get("errcode"))
                 return
             if time.time() > expired_time:
-                await client.delete_messages(chat_id,cookiemsg)
+                await client.delete_messages(chat_id, cookiemsg)
                 await client.send_message(chat_id, '超过3分钟未扫码，二维码已过期')
-                return       
+                return
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
