@@ -200,7 +200,7 @@ async def logbtn(conv, SENDER, path: str, content: str, msg):
         elif os.path.isfile(res):
             msg = await client.edit_message(msg, content + '中，请注意查收')
             await conv.send_file(res)
-            msg = await client.edit_message(msg, content + res + '成功，请查收')
+            msg = await client.edit_message(msg, res+ content + '成功，请查收')
             conv.cancel()
             return None, None
         else:
@@ -237,7 +237,7 @@ async def nodebtn(conv, SENDER, path: str, msg):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
             logger.info(res+'脚本即将在后台运行')
             os.popen('/jd/jtask.sh {} now >/jd/log/bot.log &'.format(res))
-            msg = await client.edit_message(msg, res + '在后台运行成功\n，请自行在程序结束后查看日志')
+            msg = await client.edit_message(msg, res + '在后台运行成功，请自行在程序结束后查看日志')
             conv.cancel()
             return None, None
         else:
@@ -386,7 +386,7 @@ async def cmd(cmdtext):
 async def mycookie(event):
     '''接收/getcookie后执行程序'''
     login = True
-    msg = client.send_message('正在获取二维码，请稍后')
+    firstmsg = await client.send_message(chat_id,'正在获取二维码，请稍后')
     try:
         SENDER = event.sender_id
         async with client.conversation(SENDER, timeout=30) as conv:
@@ -395,7 +395,8 @@ async def mycookie(event):
             url = 'https://plogin.m.jd.com/cgi-bin/m/tmauth?appid=300&client_type=m&token='+token
             creatqr(url)
             markup = [Button.inline("取消", data='cancel')]
-            msg = await client.edit_message(msg, '30s内点击取消将取消本次操作', file=img_file,buttons=markup)
+            await client.delete_messages(chat_id,firstmsg)
+            msg = await client.send_message(chat_id, '30s内点击取消将取消本次操作\n如不取消，扫码结果将于30s后显示', file=img_file,buttons=markup)
             convdata = await conv.wait_event(press_event(SENDER))
             res = bytes.decode(convdata.data)
             if res == 'cancel':
@@ -403,7 +404,8 @@ async def mycookie(event):
                 msg = await client.edit_message(msg,'对话已取消')
                 conv.cancel()
     except exceptions.TimeoutError:
-        expired_time = time.time() + 60 * 3
+        msg = client.send_message(msg, '等待获取结果', file=img_file)
+        expired_time = time.time() + 60 * 2
         while login:
             check_time_stamp = int(time.time() * 1000)
             check_url = 'https://plogin.m.jd.com/cgi-bin/m/tmauthchecktoken?&token=%s&ou_state=0&okl_token=%s' % (
@@ -451,12 +453,11 @@ async def mystart(event):
     /start 开始使用本程序
     /node 执行js脚本文件，直接输入/node jd_bean_change 如执行其他自己js，需输入绝对路径。即可进行执行。该命令会等待脚本执行完，期间不能使用机器人，建议使用snode命令。
     /cmd 执行cmd命令,例如/cmd python3 /python/bot.py 则将执行python目录下的bot.py 不建议使用机器人使用并发，可能产生不明原因的崩溃
-    /snode 命令可以选择脚本执行，只能选择/jd/scripts目录下的脚本，选择完后直接后台运行，不影响机器人响应其他命令
+    /snode 命令可以选择脚本执行，只能选择/scripts 和/own目录下的脚本，选择完后直接后台运行，不影响机器人响应其他命令
     /log 选择查看执行日志
     /getfile 获取jd目录下文件
-    /getcookie 扫码获取cookie 期间不能进行其他交互
-    此外直接发送文件，会让你选择保存到哪个文件夹，如果选择运行，将保存至scripts目录下，并立即运行脚本
-    crontab.list文件会自动更新时间;其他文件会被保存到/jd/scripts文件夹下'''
+    /getcookie 扫码获取cookie 增加30s内取消按钮，30s后不能进行其他交互直到2分钟或获取到cookie
+    此外直接发送文件，会让你选择保存到哪个文件夹，如果选择运行，将保存至own目录下，并立即运行脚本，crontab.list文件会自动更新时间'''
     await client.send_message(chat_id, msg)
 
 with client:
