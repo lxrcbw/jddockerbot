@@ -395,7 +395,7 @@ async def mycookie(event):
             url = 'https://plogin.m.jd.com/cgi-bin/m/tmauth?appid=300&client_type=m&token='+token
             creatqr(url)
             markup = [Button.inline("取消", data='cancel')]
-            msg = await client.edit_message(chat_msg, '30s内点击取消将取消本次操作', file=img_file,buttons=markup)
+            msg = await client.edit_message(msg, '30s内点击取消将取消本次操作', file=img_file,buttons=markup)
             convdata = await conv.wait_event(press_event(SENDER))
             res = bytes.decode(convdata.data)
             if res == 'cancel':
