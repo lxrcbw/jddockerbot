@@ -213,6 +213,23 @@ async def logbtn(conv, SENDER, path: str, content: str, msg):
         logger.error('something wrong,I\'m sorry\n'+str(e))
         return None, None
 
+async def getname(path,dir):
+    names=[]
+    reg = r'new Env\(\'[\S]+?\'\)'
+    for file in dir:
+        if os.path.isdir(path+'/'+file):
+            names.append(file)
+        else:
+            with open(path+'/'+file) as f:
+                resdatas = f.readlines()
+            for data in resdatas:
+                if 'new Env' in data:
+                    res = re.findall(reg,data)
+                    if len(res) != 0:
+                        res = res[0].replace('\"','\'').split('\'')[-2]
+                        names.append(res+'-'+file)
+                    break
+    return names
 
 async def nodebtn(conv, SENDER, path: str, msg):
     '''定义scripts脚本按钮'''
@@ -221,9 +238,10 @@ async def nodebtn(conv, SENDER, path: str, msg):
             dir = ['scripts', 'own']
         else:
             dir = os.listdir(path)
+            dir = await getname(path,dir)
         dir.sort()
-        markup = [Button.inline(file, data=str(path+'/'+file))
-                  for file in dir if os.path.isdir(path+'/'+file) or re.search(r'.js$', file)]
+        markup = [Button.inline(file.split('-')[0], data=str(path+'/'+file.split('-')[-1]))
+                  for file in dir if os.path.isdir(path+'/'+file) or re.search(r'.js$', file.split('-')[-1])]
         markup.append(Button.inline('取消', data='cancel'))
         markup = split_list(markup, 3)
         msg = await client.edit_message(msg, '请做出你的选择：', buttons=markup)
@@ -249,7 +267,6 @@ async def nodebtn(conv, SENDER, path: str, msg):
         msg = await client.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
         return None, None
-
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/log'))
 async def mylog(event):
@@ -323,6 +340,8 @@ async def myfile(event):
                 os.popen('crontab '+res+'/'+filename)
                 await client.edit_message(msg, '定时文件已保存，并更新')
                 conv.cancel()
+    except exceptions.TimeoutError:
+        msg = await client.send_message(chat_id, '选择已超时，对话已停止')
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
