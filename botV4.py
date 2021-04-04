@@ -37,7 +37,7 @@ if proxystart:
     client = TelegramClient('bot', api_id, api_hash,proxy=proxy).start(bot_token=TOKEN)
 else:
     client = TelegramClient('bot', api_id, api_hash).start(bot_token=TOKEN)
-
+cookiemsg =''
 img_file = '/jd/config/qr.jpg'
 StartCMD = bot['StartCMD']
 def press_event(user_id):
@@ -386,7 +386,8 @@ async def cmd(cmdtext):
 async def mycookie(event):
     '''接收/getcookie后执行程序'''
     login = True
-    firstmsg = await client.send_message(chat_id,'正在获取二维码，请稍后')
+    msg = await client.send_message(chat_id,'正在获取二维码，请稍后')
+    global cookiemsg
     try:
         SENDER = event.sender_id
         async with client.conversation(SENDER, timeout=30) as conv:
@@ -394,17 +395,19 @@ async def mycookie(event):
             getOKLToken()
             url = 'https://plogin.m.jd.com/cgi-bin/m/tmauth?appid=300&client_type=m&token='+token
             creatqr(url)
-            markup = [Button.inline("取消", data='cancel')]
-            await client.delete_messages(chat_id,firstmsg)
-            msg = await client.send_message(chat_id, '30s内点击取消将取消本次操作\n如不取消，扫码结果将于30s后显示', file=img_file,buttons=markup)
+            markup = [Button.inline("已扫码", data='confirm'),Button.inline("取消", data='cancel')]
+            await client.delete_messages(chat_id,msg)
+            cookiemsg = await client.send_message(chat_id, '30s内点击取消将取消本次操作\n如不取消，扫码结果将于30s后显示\n扫码后不想等待点击已扫码', file=img_file,buttons=markup)
             convdata = await conv.wait_event(press_event(SENDER))
             res = bytes.decode(convdata.data)
             if res == 'cancel':
                 login = False
-                msg = await client.edit_message(msg,'对话已取消')
+                await client.delete_messages(chat_id,cookiemsg)
+                msg = await conv.send_message('对话已取消')
                 conv.cancel()
+            else:
+                raise exceptions.TimeoutError() 
     except exceptions.TimeoutError:
-        msg = client.send_message(msg, '等待获取结果', file=img_file)
         expired_time = time.time() + 60 * 2
         while login:
             check_time_stamp = int(time.time() * 1000)
@@ -430,15 +433,18 @@ async def mycookie(event):
                 url=check_url, headers=check_header, data=check_data, timeout=30)
             data = resp.json()
             if data.get("errcode") == 0:
-                print('get')
                 parseJDCookies(resp.headers)
-                await client.edit_message(msg, '以下为获取到的cookie\n'+jd_cookie)
+                await client.delete_messages(chat_id,cookiemsg)
+                await client.send_message(chat_id, '以下为获取到的cookie')
+                await client.send_message(chat_id, jd_cookie)
                 return
             if data.get("errcode") == 21:
-                await client.edit_message(msg, '发生了某些错误\n'+data.get("errcode"))
+                await client.delete_messages(chat_id,cookiemsg)
+                await client.send_message(chat_id, '发生了某些错误\n'+data.get("errcode"))
                 return
             if time.time() > expired_time:
-                await client.edit_message(msg, '超过3分钟未扫码，二维码已过期')
+                await client.delete_messages(chat_id,cookiemsg)
+                await client.send_message(chat_id, '超过3分钟未扫码，二维码已过期')
                 return       
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
