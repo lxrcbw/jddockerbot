@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # _*_ coding:utf-8 _*_
-
-# author: https://github.com/SuMaiKaDe
+# time：    2021
+# newtime： 2021-04-07
+# version:  0.1.1
+# log: 新功能-自定义快捷键
+# author:   https://github.com/SuMaiKaDe
 
 from telethon import TelegramClient, events, Button
 import requests
@@ -11,6 +14,7 @@ import time
 import os
 import qrcode
 import logging
+import subprocess
 from asyncio import exceptions
 logging.basicConfig(
     format='%(asctime)s-%(name)s-%(levelname)s=> [%(funcName)s] %(message)s ', level=logging.INFO)
@@ -20,9 +24,11 @@ _ConfigDir = _JdDir + '/config'
 _ScriptsDir = _JdDir + '/scripts'
 _LogDir = _JdDir + '/log'
 _OwnDir = _JdDir + '/own'
+_shortcut = _ConfigDir + '/shortcut.list'
 # 频道id/用户id
 with open('/jd/config/bot.json') as f:
     bot = json.load(f)
+
 chat_id = bot['user_id']
 # 机器人 TOKEN
 TOKEN = bot['bot_token']
@@ -179,7 +185,36 @@ def split_list(datas, n, row: bool = True):
     return _datas
 
 
-async def logbtn(conv, SENDER, path: str, content: str, msg):
+async def backfile(file):
+    if os.path.exists(file):
+        try:
+            os.rename(file, file+'.bak')
+        except WindowsError:
+            os.remove(file+'.bak')
+            os.rename(file, file+'.bak')
+
+
+async def cmd(cmdtext):
+    '''定义执行cmd命令'''
+    try:
+        msg = await client.send_message(chat_id, '开始执行程序，如程序复杂，建议稍等')
+        res_bytes = subprocess.check_output(
+            cmdtext, shell=True, stderr=subprocess.STDOUT)
+        res = res_bytes.decode('utf-8')
+        if len(res) == 0:
+            await client.edit_message(msg, '已执行，但返回值为空')
+        elif len(res) <= 4000:
+            await client.edit_message(msg, res)
+        else:
+            with open(_LogDir+'/botres.log', 'w+') as f:
+                f.write(res)
+            await client.edit_message(chat_id, '执行结果较长，请查看日志', file=_LogDir+'/botres.log')
+    except Exception as e:
+        await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
+        logger.error('something wrong,I\'m sorry'+str(e))
+
+
+async def logbtn(conv, SENDER, path, msg):
     '''定义log日志按钮'''
     try:
         dir = os.listdir(path)
@@ -188,7 +223,7 @@ async def logbtn(conv, SENDER, path: str, content: str, msg):
                   for file in dir]
         markup.append(Button.inline('取消', data='cancle'))
         markup = split_list(markup, 3)
-        msg = await client.edit_message(msg, '请做出你的选择：', buttons=markup)
+        msg = await client.edit_message(msg, '请做出您的选择：', buttons=markup)
         convdata = await conv.wait_event(press_event(SENDER))
         res = bytes.decode(convdata.data)
         if res == 'cancle':
@@ -196,15 +231,15 @@ async def logbtn(conv, SENDER, path: str, content: str, msg):
             conv.cancel()
             return None, None
         elif os.path.isfile(res):
-            msg = await client.edit_message(msg, content + '中，请注意查收')
+            msg = await client.edit_message(msg, '文件发送中，请注意查收')
             await conv.send_file(res)
-            msg = await client.edit_message(msg, res + content + '成功，请查收')
+            msg = await client.edit_message(msg, res.split('/')[-2]+'发送成功，请查收')
             conv.cancel()
             return None, None
         else:
             return res, msg
     except exceptions.TimeoutError:
-        msg = await client.edit_message(msg, '选择已超时，对话已停止')
+        msg = await client.edit_message(msg, '选择已超时，本次对话已停止')
         return None, None
     except Exception as e:
         msg = await client.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
@@ -223,9 +258,10 @@ async def getname(path, dir):
                 resdatas = f.readlines()
             for data in resdatas:
                 if 'new Env' in data:
+                    data = data.replace('\"', '\'')
                     res = re.findall(reg, data)
                     if len(res) != 0:
-                        res = res[0].replace('\"', '\'').split('\'')[-2]
+                        res = res[0].split('\'')[-2]
                         names.append(res+'--->'+file)
                     break
         else:
@@ -246,7 +282,7 @@ async def nodebtn(conv, SENDER, path: str, msg):
                   for file in dir if os.path.isdir(path+'/'+file) or re.search(r'.js$', file.split('--->')[-1])]
         markup.append(Button.inline('取消', data='cancel'))
         markup = split_list(markup, 3)
-        msg = await client.edit_message(msg, '请做出你的选择：', buttons=markup)
+        msg = await client.edit_message(msg, '请做出您的选择：', buttons=markup)
         convdata = await conv.wait_event(press_event(SENDER))
         res = bytes.decode(convdata.data)
         if res == 'cancel':
@@ -256,8 +292,10 @@ async def nodebtn(conv, SENDER, path: str, msg):
         elif os.path.isfile(res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
             logger.info(res+'脚本即将在后台运行')
-            os.popen('/jd/jtask.sh {} now >/jd/log/bot.log &'.format(res))
-            msg = await client.edit_message(msg, res + '在后台运行成功，请自行在程序结束后查看日志')
+            cmdtext = 'jtask {} now'.format(res)
+            subprocess.Popen(cmdtext, shell=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            msg = await client.edit_message(msg, res.split('/')[-1] + '在后台运行成功，请自行在程序结束后查看日志')
             conv.cancel()
             return None, None
         else:
@@ -279,7 +317,7 @@ async def mylog(event):
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
-            path, msg = await logbtn(conv, SENDER, path, '查询日志', msg)
+            path, msg = await logbtn(conv, SENDER, path, msg)
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/snode'))
@@ -301,16 +339,7 @@ async def mygetfile(event):
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
-            path, msg = await logbtn(conv, SENDER, path, '文件发送', msg)
-
-
-async def backfile(file):
-    if os.path.exists(file):
-        try:
-            os.rename(file, file+'.bak')
-        except WindowsError:
-            os.remove(file+'.bak')
-            os.rename(file, file+'.bak')
+            path, msg = await logbtn(conv, SENDER, path, msg)
 
 
 @client.on(events.NewMessage(from_users=chat_id))
@@ -323,18 +352,22 @@ async def myfile(event):
             filename = event.message.file.name
             async with client.conversation(SENDER, timeout=30) as conv:
                 msg = await conv.send_message('请选择您要放入的文件夹或操作：\n')
-                markup.append(Button.inline('放入config', data=_ConfigDir))
-                markup.append(Button.inline('放入scripts', data=_ScriptsDir))
-                markup.append(Button.inline('放入own', data=_OwnDir))
-                markup.append(Button.inline('放入own并运行', data='node'))
-                msg = await client.edit_message(msg, '请做出你的选择：', buttons=markup)
+                markup.append([Button.inline('放入config', data=_ConfigDir), Button.inline(
+                    '放入scripts', data=_ScriptsDir), Button.inline('放入own', data=_OwnDir)])
+                markup.append(
+                    [Button.inline('放入own并运行', data='node'), Button.inline('取消', data='cancel')])
+                msg = await client.edit_message(msg, '请做出您的选择：', buttons=markup)
                 convdata = await conv.wait_event(press_event(SENDER))
                 res = bytes.decode(convdata.data)
-                if res == 'node':
+                if res == 'cancel':
+                    msg = await client.edit_message(msg, '对话已取消')
+                    conv.cancel()
+                elif res == 'node':
                     await backfile(_OwnDir+'/'+filename)
                     await client.download_media(event.message, _OwnDir)
-                    os.popen(
-                        'jtask {}/{} now >/jd/log/bot.log &'.format(_OwnDir, filename))
+                    cmdtext = 'jtask {}/{} now'.format(_OwnDir, filename)
+                    subprocess.Popen(
+                        cmdtext, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                     await client.edit_message(msg, '脚本已保存到own文件夹，并成功在后台运行，请稍后自行查看日志')
                     conv.cancel()
                 else:
@@ -342,7 +375,9 @@ async def myfile(event):
                     await client.download_media(event.message, res)
                     await client.edit_message(msg, filename+'已保存到'+res+'文件夹')
             if filename == 'crontab.list':
-                os.popen('crontab '+res+'/'+filename)
+                cmdtext = 'crontab '+res+'/'+filename
+                subprocess.Popen(
+                    cmdtext, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 await client.edit_message(msg, '定时文件已保存，并更新')
                 conv.cancel()
     except exceptions.TimeoutError:
@@ -383,28 +418,10 @@ async def mycmd(event):
             '''
             await client.send_message(chat_id, msg)
         else:
-            print(text)
+            logger.info(text)
             await cmd(text[0].replace('/cmd ', ''))
     else:
         await client.send_message(chat_id, '未开启CMD命令，如需使用请修改配置文件')
-
-
-async def cmd(cmdtext):
-    '''定义执行cmd命令'''
-    try:
-        await client.send_message(chat_id, '开始执行程序，如程序复杂，建议稍等')
-        res = os.popen(cmdtext).read()
-        if len(res) == 0:
-            await client.send_message(chat_id, '已执行，但返回值为空')
-        elif len(res) <= 4000:
-            await client.send_message(chat_id, res)
-        else:
-            with open(_LogDir+'/botres.log', 'w+') as f:
-                f.write(res)
-            await client.send_message(chat_id, '执行结果较长，请查看日志', file=_LogDir+'/botres.log')
-    except Exception as e:
-        await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
-        logger.error('something wrong,I\'m sorry'+str(e))
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/getcookie'))
@@ -477,19 +494,87 @@ async def mycookie(event):
         logger.error('something wrong,I\'m sorry\n'+str(e))
 
 
+@client.on(events.NewMessage(from_users=chat_id, pattern=r'^/setshort$'))
+async def setshortcut(event):
+    SENDER = event.sender_id
+    async with client.conversation(SENDER, timeout=60) as conv:
+        await conv.send_message(
+            '60s内回复有效\n请按格式输入您的快捷命令。例如：\n京豆通知-->jtask jd_bean_change\n更新脚本-->jup\n获取互助码-->jcode\nnode运行XX脚本-->node /XX/XX.js\nbash运行abc/123.sh脚本-->bash /abc/123.sh\n-->前边为要显示的名字，-->后边为要运行的命令\n 如添加运行脚本立即执行命令记得在后边添加now\n如不等待运行结果请添加nohup，如京豆通知-->nohup jtask jd_bean_change now\n如不添加nohup 会等待程序执行完，期间不能交互\n建议运行时间短命令不添加nohup ')
+        shortcut = await conv.get_response()
+        with open(_shortcut, 'w+') as f:
+            f.write(shortcut.raw_text)
+        await conv.send_message('已设置成功可通过"/a"使用')
+        conv.cancel()
+
+
+@client.on(events.NewMessage(from_users=chat_id, pattern=r'^/a$'))
+async def shortcut(event):
+    markup = []
+    SENDER = event.sender_id
+    msg = await client.send_message(chat_id, '正在查询您的常用命令，请稍后')
+    with open(_shortcut, 'r') as f:
+        shortcuts = f.readlines()
+    try:
+        async with client.conversation(SENDER, timeout=60) as conv:
+            markup = [Button.inline(shortcut.split(
+                '-->')[0], data=str(shortcut.split('-->')[-1])) for shortcut in shortcuts]
+            if len(markup) > 3:
+                markup = split_list(markup, 3)
+            markup.append(Button.inline('取消', data='cancel'))
+            msg = await client.edit_message(msg, '请做出您的选择：', buttons=markup)
+            convdata = await conv.wait_event(press_event(SENDER))
+            res = bytes.decode(convdata.data)
+            if res == 'cancel':
+                msg = await client.edit_message(msg, '对话已取消')
+                conv.cancel()
+            elif 'nohup ' in res:
+                msg = await client.edit_message(msg, '即将执行您的操作'+res)
+                cmdtext = res.replace('nohup ', '')
+                subprocess.Popen(
+                    cmdtext, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                msg = await client.edit_message(msg, '已在后台执行您的操作'+res.replace('nohup ', ''))
+                conv.cancel()
+            else:
+                await client.delete_messages(chat_id,msg)
+                await cmd(res)
+                conv.cancel()
+    except exceptions.TimeoutError:
+        msg = await client.edit_message(msg, '选择已超时，对话已停止')
+    except Exception as e:
+        await client.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
+        logger.error('something wrong,I\'m sorry\n'+str(e))
+
+
 @client.on(events.NewMessage(from_users=chat_id, pattern='/help'))
+async def myhelp():
+    '''接收/help命令后执行程序'''
+    msg = '''
+    a-我的自定义快捷按钮
+    start-开始使用本程序
+    node-执行js脚本文件，绝对路径。
+    cmd-执行cmd命令
+    snode-选择脚本后台运行
+    log-选择日志
+    getfile-获取jd目录下文件
+    setshort-设置自定义按钮
+    getcookie-扫码获取cookie'''
+    await client.send_message(chat_id, msg)
+
 @client.on(events.NewMessage(from_users=chat_id, pattern='/start'))
-async def mystart(event):
-    '''接收/help /start命令后执行程序'''
+async def mystart():
+    '''接收/start命令后执行程序'''
     msg = '''使用方法如下：
+    /help 获取命令，可直接发送至botfather
+    /a 使用你的自定义快捷按钮
     /start 开始使用本程序
     /node 执行js脚本文件，直接输入/node jd_bean_change 如执行其他自己js，需输入绝对路径。即可进行执行。该命令会等待脚本执行完，期间不能使用机器人，建议使用snode命令。
     /cmd 执行cmd命令,例如/cmd python3 /python/bot.py 则将执行python目录下的bot.py 不建议使用机器人使用并发，可能产生不明原因的崩溃
     /snode 命令可以选择脚本执行，只能选择/scripts 和/own目录下的脚本，选择完后直接后台运行，不影响机器人响应其他命令
     /log 选择查看执行日志
     /getfile 获取jd目录下文件
-    /getcookie 扫码获取cookie 增加30s内取消按钮，30s后不能进行其他交互直到2分钟或获取到cookie
-    此外直接发送文件，会让你选择保存到哪个文件夹，如果选择运行，将保存至own目录下，并立即运行脚本，crontab.list文件会自动更新时间'''
+    /setshort 设置自定义按钮，每次设置会覆盖原设置
+    /getcookie 扫码获取cookie 增加30s内取消按钮，30s后不能进行其他交互直到2分钟或获取到cookie  
+    此外直接发送文件，会让您选择保存到哪个文件夹，如果选择运行，将保存至own目录下，并立即运行脚本，crontab.list文件会自动更新时间'''
     await client.send_message(chat_id, msg)
 
 with client:
