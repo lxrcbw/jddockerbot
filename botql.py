@@ -19,13 +19,13 @@ from asyncio import exceptions
 logging.basicConfig(
     format='%(asctime)s-%(name)s-%(levelname)s=> [%(funcName)s] %(message)s ', level=logging.INFO)
 logger = logging.getLogger(__name__)
-_JdDir = '/jd'
+_JdDir = '/ql'
 _ConfigDir = _JdDir + '/config'
 _ScriptsDir = _JdDir + '/scripts'
 _LogDir = _JdDir + '/log'
 _shortcut = _ConfigDir + '/shortcut.list'
 # 频道id/用户id
-with open('/jd/config/bot.json') as f:
+with open(_Config + '/bot.json') as f:
     bot = json.load(f)
 chat_id = bot['user_id']
 # 机器人 TOKEN
@@ -43,7 +43,7 @@ if proxystart:
 else:
     client = TelegramClient('bot', api_id, api_hash).start(bot_token=TOKEN)
 cookiemsg = ''
-img_file = '/jd/config/qr.jpg'
+img_file = _Config + '/qr.jpg'
 StartCMD = bot['StartCMD']
 
 
