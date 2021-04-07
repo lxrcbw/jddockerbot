@@ -207,7 +207,7 @@ async def cmd(cmdtext):
             await client.edit_message(msg, res)
         else:
             with open(_LogDir+'/botres.log', 'w+') as f:
-                f.write(res)
+                f.write(str(res))
             await client.edit_message(chat_id, '执行结果较长，请查看日志', file=_LogDir+'/botres.log')
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
