@@ -537,7 +537,7 @@ async def shortcut(event):
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern='/help'))
-async def myhelp():
+async def myhelp(event):
     '''接收/help命令后执行程序'''
     msg = '''
     a-我的自定义快捷按钮
@@ -552,7 +552,7 @@ async def myhelp():
     await client.send_message(chat_id, msg)
 
 @client.on(events.NewMessage(from_users=chat_id, pattern='/start'))
-async def mystart():
+async def mystart(event):
     '''接收/help /start命令后执行程序'''
     msg = '''使用方法如下：
     /start 开始使用本程序
