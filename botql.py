@@ -25,7 +25,7 @@ _ScriptsDir = _JdDir + '/scripts'
 _LogDir = _JdDir + '/log'
 _shortcut = _ConfigDir + '/shortcut.list'
 # 频道id/用户id
-with open(_Config + '/bot.json') as f:
+with open(_ConfigDir + '/bot.json') as f:
     bot = json.load(f)
 chat_id = bot['user_id']
 # 机器人 TOKEN
@@ -43,7 +43,7 @@ if proxystart:
 else:
     client = TelegramClient('bot', api_id, api_hash).start(bot_token=TOKEN)
 cookiemsg = ''
-img_file = _Config + '/qr.jpg'
+img_file = _ConfigDir + '/qr.jpg'
 StartCMD = bot['StartCMD']
 
 
@@ -283,7 +283,7 @@ async def mylog(event):
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
-            path, msg = await logbtn(conv, SENDER, path, '查询日志', msg)
+            path, msg = await logbtn(conv, SENDER, path, msg)
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/snode'))
@@ -305,7 +305,7 @@ async def mygetfile(event):
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
-            path, msg = await logbtn(conv, SENDER, path, '文件发送', msg)
+            path, msg = await logbtn(conv, SENDER, path, msg)
 
 
 async def backfile(file):
