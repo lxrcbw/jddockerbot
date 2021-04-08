@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # _*_ coding:utf-8 _*_
-# time：    2021
-# newtime： 2021-04-07
-# version:  0.1.1
-# log: 新功能-自定义快捷键
-# author:   https://github.com/SuMaiKaDe
+# time：     2021
+# newtime：  2021-04-07
+# version：  0.1.2
+# log：      新功能-替换红包雨id，需要redrain.js存在于scripts文件夹下
+# author：   https://github.com/SuMaiKaDe
 
 from telethon import TelegramClient, events, Button
 import requests

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # _*_ coding:utf-8 _*_
-# time：    2021
-# newtime： 2021-04-07
-# version:  0.1.1
-# log: 新功能-自定义快捷键
-# author:   https://github.com/SuMaiKaDe
+# time：     2021
+# newtime：  2021-04-07
+# version：  0.1.2
+# log：      新功能-替换红包雨id，需要redrain.js存在于scripts文件夹下
+# author：   https://github.com/SuMaiKaDe
+
 
 from telethon import TelegramClient, events, Button
 import requests
@@ -536,7 +537,7 @@ async def shortcut(event):
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^RRA\w*'))
 async def redrain(event):
-    '''替换修改config文件cookie'''
+    '''替换修改redrain.js的ID'''
     try:
         _redrain = _ScriptsDir + '/redrain.js'
         newid = event.raw_text
