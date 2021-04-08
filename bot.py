@@ -535,22 +535,6 @@ async def shortcut(event):
         await client.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
 
-@client.on(events.NewMessage(from_users=chat_id, pattern=r'^RRA\w*'))
-async def redrain(event):
-    '''替换修改redrain.js的ID'''
-    try:
-        _redrain = _ScriptsDir + '/redrain.js'
-        newid = event.raw_text
-        with open(_redrain,'r+') as f:
-            lines = f.read()
-        newlines = re.sub(r'RRA\w*',newid,lines)
-        with open(_redrain,'w') as newf:
-            newf.write(newlines)
-        await client.send_message(chat_id, '已完成替换咯')
-    except Exception as e:
-        await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
-
-
 @client.on(events.NewMessage(from_users=chat_id, pattern='/help'))
 async def myhelp(event):
     '''接收/help命令后执行程序'''
