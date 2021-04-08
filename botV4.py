@@ -518,9 +518,8 @@ async def shortcut(event):
         async with client.conversation(SENDER, timeout=60) as conv:
             markup = [Button.inline(shortcut.split(
                 '-->')[0], data=str(shortcut.split('-->')[-1])) for shortcut in shortcuts]
-            if len(markup) > 3:
-                markup = split_list(markup, 3)
             markup.append(Button.inline('取消', data='cancel'))
+            markup = split_list(markup, 3)
             msg = await client.edit_message(msg, '请做出您的选择：', buttons=markup)
             convdata = await conv.wait_event(press_event(SENDER))
             res = bytes.decode(convdata.data)
