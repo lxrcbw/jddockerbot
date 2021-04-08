@@ -258,7 +258,7 @@ async def nodebtn(conv, SENDER, path: str, msg):
         elif os.path.isfile(res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
             logger.info(res+'脚本即将在后台运行')
-            cmdtext = 'jd {} now'.format(res)
+            cmdtext = 'jd {} now'.format(res.split('/')[-1])
             subprocess.Popen(cmdtext, shell=True,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             msg = await client.edit_message(msg, res + '在后台运行成功，请自行在程序结束后查看日志')
@@ -340,7 +340,7 @@ async def myfile(event):
                 elif res == 'node':
                     await backfile(_ScriptsDir+'/'+filename)
                     await client.download_media(event.message, _ScriptsDir)
-                    cmdtext = 'jd {}/{} now'.format(_ScriptsDir, filename)
+                    cmdtext = 'jd {} now'.format(filename)
                     subprocess.Popen(
                         cmdtext, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                     await client.edit_message(msg, '脚本已保存到Scripts文件夹，并成功在后台运行，请稍后自行查看日志')
@@ -374,7 +374,7 @@ async def mynode(event):
         '''
         await client.send_message(chat_id, res)
     else:
-        await cmd('jd '+text[0].replace('/node ', '')+' now')
+        await cmd('node '+text[0].replace('/node ', '')+' now')
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern='/cmd'))
