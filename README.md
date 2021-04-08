@@ -13,6 +13,7 @@
     - 如需扫码获取cookie 需执行`apk add zlib-dev gcc jpeg-dev python3-dev musl-dev`
     - 由于需要安装多个依赖包，建议将清华源设置为默认源`pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple`
     - 执行`pip3 install telethon python-socks[asyncio] pillow qrcode requests`
+    - 或者下载requirements.txt `pip3 install -r requirements.txt`
     - rebot.sh 用于杀死原bot进程，后台启动新进程，建议直接环境搭建好后直接 `bash /jd/config/rebot.sh`
     - 如果需要更换机器人token，需要将bot.session删除后，重新运行`bash /jd/config/rebot.sh`
 ***

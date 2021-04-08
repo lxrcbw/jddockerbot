@@ -258,7 +258,7 @@ async def nodebtn(conv, SENDER, path: str, msg):
         elif os.path.isfile(res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
             logger.info(res+'脚本即将在后台运行')
-            cmdtext = 'bash jd {} now'.format(res)
+            cmdtext = 'jd {} now'.format(res)
             subprocess.Popen(cmdtext, shell=True,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             msg = await client.edit_message(msg, res + '在后台运行成功，请自行在程序结束后查看日志')
@@ -283,7 +283,7 @@ async def mylog(event):
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
-            path, msg = await logbtn(conv, SENDER, path, '查询日志', msg)
+            path, msg = await logbtn(conv, SENDER, path, msg)
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/snode'))
@@ -305,7 +305,7 @@ async def mygetfile(event):
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
-            path, msg = await logbtn(conv, SENDER, path, '文件发送', msg)
+            path, msg = await logbtn(conv, SENDER, path, msg)
 
 
 async def backfile(file):
@@ -340,7 +340,7 @@ async def myfile(event):
                 elif res == 'node':
                     await backfile(_ScriptsDir+'/'+filename)
                     await client.download_media(event.message, _ScriptsDir)
-                    cmdtext = 'bash jd {}/{} now'.format(_ScriptsDir, filename)
+                    cmdtext = 'jd {}/{} now'.format(_ScriptsDir, filename)
                     subprocess.Popen(
                         cmdtext, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                     await client.edit_message(msg, '脚本已保存到Scripts文件夹，并成功在后台运行，请稍后自行查看日志')
@@ -374,7 +374,7 @@ async def mynode(event):
         '''
         await client.send_message(chat_id, res)
     else:
-        await cmd('bash jd '+text[0].replace('/node ', '')+' now')
+        await cmd('jd '+text[0].replace('/node ', '')+' now')
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern='/cmd'))
@@ -490,7 +490,7 @@ async def setshortcut(event):
     SENDER = event.sender_id
     async with client.conversation(SENDER, timeout=60) as conv:
         await conv.send_message(
-            '60s内回复有效\n请按格式输入您的快捷命令。例如：\n京豆通知-->bash jd jd_bean_change\n更新脚本-->jup\n获取互助码-->jcode\nnode运行XX脚本-->node /XX/XX.js\nbash运行abc/123.sh脚本-->bash /abc/123.sh\n-->前边为要显示的名字，-->后边为要运行的命令\n 如添加运行脚本立即执行命令记得在后边添加now\n如不等待运行结果请添加nohup，如京豆通知-->nohup bash jd jd_bean_change now\n如不添加nohup 会等待程序执行完，期间不能交互\n建议运行时间短命令不添加nohup ')
+            '60s内回复有效\n请按格式输入您的快捷命令。例如：\n京豆通知-->jd jd_bean_change\n更新脚本-->jup\n获取互助码-->jcode\nnode运行XX脚本-->node /XX/XX.js\nbash运行abc/123.sh脚本-->bash /abc/123.sh\n-->前边为要显示的名字，-->后边为要运行的命令\n 如添加运行脚本立即执行命令记得在后边添加now\n如不等待运行结果请添加nohup，如京豆通知-->nohup jd jd_bean_change now\n如不添加nohup 会等待程序执行完，期间不能交互\n建议运行时间短命令不添加nohup ')
         shortcut = await conv.get_response()
         with open(_shortcut, 'w+') as f:
             f.write(shortcut.raw_text)
