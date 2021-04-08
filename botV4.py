@@ -493,6 +493,21 @@ async def mycookie(event):
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
 
+@client.on(events.NewMessage(from_users=chat_id, pattern=r'^RRA\w*'))
+async def redrain(event):
+    '''替换修改config文件cookie'''
+    try:
+        _redrain = _ScriptsDir + '/redrain.js'
+        newid = event.raw_text
+        with open(_redrain,'r+') as f:
+            lines = f.read()
+        newlines = re.sub(r'RRA\w*',newid,lines)
+        with open(_redrain,'w') as newf:
+            newf.write(newlines)
+        await client.send_message(chat_id, '已完成替换咯')
+    except Exception as e:
+        await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
+
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/setshort$'))
 async def setshortcut(event):
