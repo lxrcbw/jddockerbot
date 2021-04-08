@@ -538,7 +538,7 @@ async def shortcut(event):
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^RRA\w*'))
 async def redrain(event):
-    '''替换修改config文件cookie'''
+    '''替换修改redrain.js的ID'''
     try:
         _redrain = _ScriptsDir + '/redrain.js'
         newid = event.raw_text
