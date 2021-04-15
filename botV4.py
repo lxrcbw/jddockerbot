@@ -5,6 +5,7 @@
 # version：  0.1.4
 # log：      新功能-当选项超过90时，自动分页，避免因tg限制导致显示不全;新功能-edit命令，简单文件编辑
 # author：   https://github.com/SuMaiKaDe
+
 from telethon import TelegramClient, events, Button
 import requests
 import re
@@ -26,9 +27,9 @@ _LogDir = _JdDir + '/log'
 _OwnDir = _JdDir + '/own'
 _shortcut = _ConfigDir + '/shortcut.list'
 # 频道id/用户id
-with open('/jd/config/bot.json', 'r', encoding='utf-8') as f:
+with open(_ConfigDir + '/bot.json', 'r', encoding='utf-8') as f:
     bot = json.load(f)
-chat_id = bot['user_id']
+chat_id = int(bot['user_id'])
 # 机器人 TOKEN
 TOKEN = bot['bot_token']
 # 发消息的TG代理
@@ -36,7 +37,7 @@ TOKEN = bot['bot_token']
 api_id = bot['api_id']
 api_hash = bot['api_hash']
 proxystart = bot['proxy']
-proxy = (bot['proxy_type'], bot['proxy_add'], bot['proxy_port'])
+proxy = (bot['proxy_type'], bot['proxy_add'], int(bot['proxy_port']))
 # 开启tg对话
 if proxystart:
     client = TelegramClient('bot', api_id, api_hash,
@@ -44,10 +45,14 @@ if proxystart:
 else:
     client = TelegramClient('bot', api_id, api_hash).start(bot_token=TOKEN)
 cookiemsg = ''
-img_file = '/jd/config/qr.jpg'
+img_file = _ConfigDir + '/qr.jpg'
 StartCMD = bot['StartCMD']
+
+
 def press_event(user_id):
     return events.CallbackQuery(func=lambda e: e.sender_id == user_id)
+
+
 # 扫码获取cookie 直接采用LOF大佬代码
 # getSToken请求获取，s_token用于发送post请求是的必须参数
 s_token = ""
@@ -59,6 +64,7 @@ cookies = ""
 token, okl_token = "", ""
 # 最终获取到的可用的cookie
 jd_cookie = ""
+
 
 def getSToken():
     time_stamp = int(time.time() * 1000)
@@ -80,6 +86,7 @@ def getSToken():
     except Exception as error:
         logger.exception("Get网络请求异常", error)
 
+
 def parseGetRespCookie(headers, get_resp):
     global s_token
     global cookies
@@ -91,6 +98,7 @@ def parseGetRespCookie(headers, get_resp):
     lstoken = re.findall(r"lstoken=(.+?);", set_cookies)[0]
     cookies = f"guid={guid}; lang=chs; lsid={lsid}; lstoken={lstoken}; "
     logger.info(cookies)
+
 
 def getOKLToken():
     post_time_stamp = int(time.time() * 1000)
@@ -120,6 +128,7 @@ def getOKLToken():
     except Exception as error:
         logger.exception("Post网络请求错误", error)
 
+
 def parsePostRespCookie(headers, data):
     global token
     global okl_token
@@ -127,6 +136,7 @@ def parsePostRespCookie(headers, data):
     okl_token = re.findall(r"okl_token=(.+?);", headers.get('set-cookie'))[0]
     logger.info("token:" + token)
     logger.info("okl_token:" + okl_token)
+
 
 def parseJDCookies(headers):
     global jd_cookie
@@ -137,6 +147,7 @@ def parseJDCookies(headers):
     logger.info(pt_key)
     logger.info(pt_pin)
     jd_cookie = f'pt_key={pt_key};pt_pin={pt_pin};'
+
 
 def creatqr(text):
     '''实例化QRCode生成qr对象'''
@@ -155,6 +166,7 @@ def creatqr(text):
     # 保存二维码
     img.save(img_file)
 
+
 def split_list(datas, n, row: bool = True):
     """一维列表转二维列表，根据N不同，生成不同级别的列表"""
     length = len(datas)
@@ -168,6 +180,7 @@ def split_list(datas, n, row: bool = True):
         _datas.append(datas[start:end])
     return _datas
 
+
 async def backfile(file):
     if os.path.exists(file):
         try:
@@ -175,6 +188,7 @@ async def backfile(file):
         except WindowsError:
             os.remove(file+'.bak')
             os.rename(file, file+'.bak')
+
 
 async def cmd(cmdtext):
     '''定义执行cmd命令'''
@@ -187,13 +201,14 @@ async def cmd(cmdtext):
             await client.edit_message(msg, '已执行，但返回值为空')
         elif len(res) <= 4000:
             await client.edit_message(msg, res)
-        else:
+        elif len(res) > 4000:
             with open(_LogDir+'/botres.log', 'w+', encoding='utf-8') as f:
-                f.write(str(res))
+                f.write(res)
             await client.edit_message(chat_id, '执行结果较长，请查看日志', file=_LogDir+'/botres.log')
     except Exception as e:
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry'+str(e))
+
 
 async def logbtn(conv, SENDER, path, msg, page):
     '''定义log日志按钮'''
@@ -251,6 +266,7 @@ async def logbtn(conv, SENDER, path, msg, page):
         logger.error('something wrong,I\'m sorry\n'+str(e))
         return None, None, None
 
+
 async def getname(path, dir):
     names = []
     reg = r'new Env\(\'[\S]+?\'\)'
@@ -271,6 +287,7 @@ async def getname(path, dir):
         else:
             continue
     return names
+
 
 async def nodebtn(conv, SENDER, path: str, msg, page):
     '''定义scripts脚本按钮'''
@@ -335,6 +352,7 @@ async def nodebtn(conv, SENDER, path: str, msg, page):
         logger.error('something wrong,I\'m sorry\n'+str(e))
         return None, None, None
 
+
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/log'))
 async def mylog(event):
     '''定义日志文件操作'''
@@ -345,6 +363,7 @@ async def mylog(event):
         msg = await conv.send_message('正在查询，请稍后')
         while path:
             path, msg, page = await logbtn(conv, SENDER, path, msg, page)
+
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/snode'))
 async def mysnode(event):
@@ -357,6 +376,7 @@ async def mysnode(event):
         while path:
             path, msg, page = await nodebtn(conv, SENDER, path, msg, page)
 
+
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/getfile'))
 async def mygetfile(event):
     '''定义获取文件命令'''
@@ -367,6 +387,7 @@ async def mygetfile(event):
         msg = await conv.send_message('正在查询，请稍后')
         while path:
             path, msg, page = await logbtn(conv, SENDER, path, msg, page)
+
 
 @client.on(events.NewMessage(from_users=chat_id))
 async def myfile(event):
@@ -412,6 +433,7 @@ async def myfile(event):
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
 
+
 @client.on(events.NewMessage(from_users=chat_id, pattern='/edit'))
 async def myfileup(event):
     '''定义编辑文件操作'''
@@ -424,12 +446,13 @@ async def myfileup(event):
         while path:
             path, msg, page, file = await myedit(conv, SENDER, path, msg, page, file)
 
+
 async def myedit(conv, SENDER, path, msg, page, file):
     mybtn = [Button.inline('上一页', data='up'), Button.inline(
         '下一页', data='next'), Button.inline('取消', data='cancel')]
     mybtn2 = [[Button.inline('上一页', data='up'), Button.inline(
         '下一页', data='next'), Button.inline('取消', data='cancel')], [Button.inline('上十页', data='up10'), Button.inline(
-        '下十页', data='next10'),Button.inline('编辑', data='edit')]]
+            '下十页', data='next10'), Button.inline('编辑', data='edit')]]
     try:
         if type(path) == list and type(path[0][0]) == str:
             markup = path
@@ -513,6 +536,7 @@ async def myedit(conv, SENDER, path, msg, page, file):
         logger.error('something wrong,I\'m sorry\n'+str(e))
         return None, None, None, None
 
+
 @client.on(events.NewMessage(from_users=chat_id, pattern='/node'))
 async def mynode(event):
     '''接收/node命令后执行程序'''
@@ -526,6 +550,8 @@ async def mynode(event):
         await client.send_message(chat_id, res)
     else:
         await cmd('jtask '+text[0].replace('/node ', '')+' now')
+
+
 @client.on(events.NewMessage(from_users=chat_id, pattern='/cmd'))
 async def mycmd(event):
     '''接收/cmd命令后执行程序'''
@@ -546,6 +572,7 @@ async def mycmd(event):
             await cmd(text[0].replace('/cmd ', ''))
     else:
         await client.send_message(chat_id, '未开启CMD命令，如需使用请修改配置文件')
+
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/getcookie'))
 async def mycookie(event):
@@ -614,6 +641,7 @@ async def mycookie(event):
         await client.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
 
+
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/setshort$'))
 async def setshortcut(event):
     SENDER = event.sender_id
@@ -625,6 +653,7 @@ async def setshortcut(event):
             f.write(shortcut.raw_text)
         await conv.send_message('已设置成功可通过"/a"使用')
         conv.cancel()
+
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/a$'))
 async def shortcut(event):
@@ -662,6 +691,7 @@ async def shortcut(event):
         await client.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
 
+
 @client.on(events.NewMessage(from_users=chat_id, pattern='/help'))
 async def myhelp(event):
     '''接收/help命令后执行程序'''
@@ -677,6 +707,8 @@ async def myhelp(event):
     setshort-设置自定义按钮
     getcookie-扫码获取cookie'''
     await client.send_message(chat_id, msg)
+
+
 @client.on(events.NewMessage(from_users=chat_id, pattern='/start'))
 async def mystart(event):
     '''接收/start命令后执行程序'''
@@ -694,5 +726,6 @@ async def mystart(event):
     /edit 从jd目录下选择文件编辑，需要将编辑好信息全部发给机器人，机器人会根据你发的信息进行替换。建议用来编辑config或crontab.list 其他文件慎用！！！
     此外直接发送文件，会让您选择保存到哪个文件夹，如果选择运行，将保存至own目录下，并立即运行脚本，crontab.list文件会自动更新时间'''
     await client.send_message(chat_id, msg)
+
 with client:
     client.loop.run_forever()
