@@ -300,7 +300,7 @@ async def nodebtn(conv, SENDER, path: str, msg, page):
                 newmarkup.append(mybtn)
         else:
             if path == '/jd':
-                dir = ['scripts', 'own']
+                dir = ['scripts', 'diyscripts']
             else:
                 dir = os.listdir(path)
                 dir = await getname(path, dir)
@@ -368,7 +368,7 @@ async def mylog(event):
 async def mysnode(event):
     '''定义supernode文件命令'''
     SENDER = event.sender_id
-    path = _ScriptsDir
+    path = _JdDir
     page = 0
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
