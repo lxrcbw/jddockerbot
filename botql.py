@@ -20,13 +20,17 @@ from asyncio import exceptions
 logging.basicConfig(
     format='%(asctime)s-%(name)s-%(levelname)s=> [%(funcName)s] %(message)s ', level=logging.INFO)
 logger = logging.getLogger(__name__)
-_JdDir = '/ql'
+# 定义目录,以bot.py所在目录上级目录为/jd或/ql文件夹
+_JdDir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 _ConfigDir = _JdDir + '/config'
 _ScriptsDir = _JdDir + '/scripts'
+_DiyScripts = _JdDir + '/diyscripts'
 _LogDir = _JdDir + '/log'
 _shortcut = _ConfigDir + '/shortcut.list'
+_bot = _ConfigDir + '/bot.json'
+_qr = _ConfigDir + 'qr.jpg'
 # 频道id/用户id
-with open(_ConfigDir + '/bot.json', 'r', encoding='utf-8') as f:
+with open(_bot, 'r', encoding='utf-8') as f:
     bot = json.load(f)
 chat_id = int(bot['user_id'])
 # 机器人 TOKEN
@@ -44,7 +48,7 @@ if proxystart:
 else:
     client = TelegramClient('bot', api_id, api_hash).start(bot_token=TOKEN)
 cookiemsg = ''
-img_file = _ConfigDir + '/qr.jpg'
+img_file = _qr
 StartCMD = bot['StartCMD']
 
 
@@ -222,7 +226,7 @@ async def logbtn(conv, SENDER, path, msg, page):
         else:
             dir = os.listdir(path)
             dir.sort()
-            markup = [Button.inline(file, data=str(path+'/'+file))
+            markup = [Button.inline(file, data=str(file))
                       for file in dir]
             markup = split_list(markup, 3)
             if len(markup) > 30:
@@ -249,14 +253,14 @@ async def logbtn(conv, SENDER, path, msg, page):
             if page < 0:
                 page = len(markup) - 1
             return markup, msg, page
-        elif os.path.isfile(res):
+        elif os.path.isfile(path+'/'+res):
             msg = await client.edit_message(msg, '文件发送中，请注意查收')
-            await conv.send_file(res)
-            msg = await client.edit_message(msg, res.split('/')[-2]+'/'+res.split('/')[-1]+'发送成功，请查收')
+            await conv.send_file(path+'/'+res)
+            msg = await client.edit_message(msg, res+'发送成功，请查收')
             conv.cancel()
             return None, None, None
         else:
-            return res, msg, page
+            return path+'/'+res, msg, page
     except exceptions.TimeoutError:
         msg = await client.edit_message(msg, '选择已超时，本次对话已停止')
         return None, None, None
@@ -305,7 +309,7 @@ async def nodebtn(conv, SENDER, path: str, msg, page):
                 dir = os.listdir(path)
                 dir = await getname(path, dir)
             dir.sort()
-            markup = [Button.inline(file.split('--->')[0], data=str(path+'/'+file.split('--->')[-1]))
+            markup = [Button.inline(file.split('--->')[0], data=str(file.split('--->')[-1]))
                       for file in dir if os.path.isdir(path+'/'+file) or re.search(r'.js$', file.split('--->')[-1])]
             markup = split_list(markup, 3)
             if len(markup) > 30:
@@ -332,17 +336,17 @@ async def nodebtn(conv, SENDER, path: str, msg, page):
             if page < 0:
                 page = len(markup) - 1
             return markup, msg, page
-        elif os.path.isfile(res):
+        elif os.path.isfile(path+'/'+res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
-            logger.info(res+'脚本即将在后台运行')
-            cmdtext = 'js {} now'.format(res)
+            logger.info(path+'/'+res+'脚本即将在后台运行')
+            cmdtext = 'js {}/{} now'.format(path, res)
             subprocess.Popen(cmdtext, shell=True,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             msg = await client.edit_message(msg, res + '在后台运行成功，请自行在程序结束后查看日志')
             conv.cancel()
             return None, None, None
         else:
-            return res, msg, page
+            return path+'/'+res, msg, page
     except exceptions.TimeoutError:
         msg = await client.edit_message(msg, '选择已超时，对话已停止')
         return None, None, None
@@ -399,9 +403,9 @@ async def myfile(event):
             async with client.conversation(SENDER, timeout=30) as conv:
                 msg = await conv.send_message('请选择您要放入的文件夹或操作：\n')
                 markup.append([Button.inline('放入config', data=_ConfigDir), Button.inline(
-                    '放入scripts', data=_ScriptsDir)])
+                    '放入scripts', data=_ScriptsDir), Button.inline('放入diyscripts', data=_DiyScripts)])
                 markup.append(
-                    [Button.inline('放入scripts并运行', data='node'), Button.inline('取消', data='cancel')])
+                    [Button.inline('放入diyscripts并运行', data='node'), Button.inline('取消', data='cancel')])
                 msg = await client.edit_message(msg, '请做出您的选择：', buttons=markup)
                 convdata = await conv.wait_event(press_event(SENDER))
                 res = bytes.decode(convdata.data)
@@ -409,12 +413,12 @@ async def myfile(event):
                     msg = await client.edit_message(msg, '对话已取消')
                     conv.cancel()
                 elif res == 'node':
-                    await backfile(_ScriptsDir+'/'+filename)
-                    await client.download_media(event.message, _ScriptsDir)
-                    cmdtext = 'js {}/{} now'.format(_ScriptsDir, filename)
+                    await backfile(_DiyScripts+'/'+filename)
+                    await client.download_media(event.message, _DiyScripts)
+                    cmdtext = 'js {}/{} now'.format(_DiyScripts, filename)
                     subprocess.Popen(
                         cmdtext, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                    await client.edit_message(msg, '脚本已保存到Scripts文件夹，并成功在后台运行，请稍后自行查看日志')
+                    await client.edit_message(msg, '脚本已保存到DIYScripts文件夹，并成功在后台运行，请稍后自行查看日志')
                     conv.cancel()
                 else:
                     await backfile(res+'/'+filename)
@@ -467,7 +471,7 @@ async def myedit(conv, SENDER, path, msg, page, file):
                 dir = os.listdir(path)
                 dir.sort()
                 markup = [Button.inline(file, data=str(
-                    path+'/'+file)) for file in dir]
+                    file)) for file in dir]
                 markup = split_list(markup, 3)
                 if len(markup) > 30:
                     markup = split_list(markup, 30)
@@ -518,15 +522,15 @@ async def myedit(conv, SENDER, path, msg, page, file):
             await client.send_message(chat_id, '文件已修改成功，原文件备份为'+file+'.bak')
             conv.cancel()
             return None, None, None, None
-        elif os.path.isfile(res):
+        elif os.path.isfile(path+'/'+res):
             msg = await client.edit_message(msg, '文件读取中...请稍候')
-            with open(res, 'r', encoding='utf-8') as f:
+            with open(path+'/'+res, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
             lines = split_list(lines, 15)
             page = 0
-            return lines, msg, page, res
+            return lines, msg, page, path+'/'+res
         else:
-            return res, msg, page, file
+            return path + '/' + res, msg, page, file
     except exceptions.TimeoutError:
         msg = await client.edit_message(msg, '选择已超时，本次对话已停止')
         return None, None, None, None
