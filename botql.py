@@ -339,7 +339,7 @@ async def nodebtn(conv, SENDER, path: str, msg, page):
         elif os.path.isfile(path+'/'+res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
             logger.info(path+'/'+res+'脚本即将在后台运行')
-            cmdtext = 'js {}/{} now'.format(path, res)
+            cmdtext = 'js {} now'.format(res)
             subprocess.Popen(cmdtext, shell=True,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             msg = await client.edit_message(msg, res + '在后台运行成功，请自行在程序结束后查看日志')
