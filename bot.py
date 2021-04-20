@@ -335,7 +335,7 @@ async def nodebtn(conv, SENDER, path, msg, page, filelist):
                 newmarkup.append(mybtn)
             else:
                 newmarkup = markup
-               if path == _JdDir:
+                if path == _JdDir:
                     newmarkup.append([Button.inline('取消', data='cancel')])
                 else:
                     newmarkup.append(
@@ -540,7 +540,7 @@ async def myedit(conv, SENDER, path, msg, page, filelist):
             if page < 0:
                 page = len(markup) - 1
             return path, msg, page,  markup
-            elif res == 'updir':
+        elif res == 'updir':
             path = '/'.join(path.split('/')[:-1])
             if path == '':
                 path = _JdDir
