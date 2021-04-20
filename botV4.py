@@ -42,8 +42,12 @@ api_id = bot['api_id']
 api_hash = bot['api_hash']
 proxystart = bot['proxy']
 if 'proxy_user' in bot.keys() and bot['proxy_user'] != "代理的username,有则填写，无则不用动":
-    proxy = (bot['proxy_type'], bot['proxy_add'], bot['proxy_port'],
-             bot['proxy_user'], bot['proxy_password'])
+    proxy = {
+        'proxy_type': bot['proxy_type'],
+        'addr':  bot['proxy_add'],
+        'port': bot['proxy_port'],
+        'username': bot['proxy_user'],
+        'password': bot['proxy_password']}
 else:
     proxy = (bot['proxy_type'], bot['proxy_add'], bot['proxy_port'])
 # 开启tg对话
