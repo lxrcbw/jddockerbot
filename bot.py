@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # _*_ coding:utf-8 _*_
 # time：     2021
-# newtime：  2021-04-12
-# version：  0.1.4
-# log：      新功能-当选项超过90时，自动分页，避免因tg限制导致显示不全;新功能-edit命令，简单文件编辑
+# newtime：  2021-04-20
+# version：  0.1.6
+# log：      新功能-返回上级目录；bot.json增加配置，<代理账号与密码>，已配置好的无需修改
 # author：   https://github.com/SuMaiKaDe
 
 from telethon import TelegramClient, events, Button
@@ -39,7 +39,11 @@ TOKEN = bot['bot_token']
 api_id = bot['api_id']
 api_hash = bot['api_hash']
 proxystart = bot['proxy']
-proxy = (bot['proxy_type'], bot['proxy_add'], bot['proxy_port'])
+if 'proxy_user' in bot.keys() and bot['proxy_user'] != "代理的username,有则填写，无则不用动":
+    proxy = (bot['proxy_type'], bot['proxy_add'], bot['proxy_port'],
+             bot['proxy_user'], bot['proxy_password'])
+else:
+    proxy = (bot['proxy_type'], bot['proxy_add'], bot['proxy_port'])
 # 开启tg对话
 if proxystart:
     client = TelegramClient('bot', api_id, api_hash,
@@ -212,13 +216,13 @@ async def cmd(cmdtext):
         logger.error('something wrong,I\'m sorry'+str(e))
 
 
-async def logbtn(conv, SENDER, path, msg, page):
+async def logbtn(conv, SENDER, path, msg, page, filelist):
     '''定义log日志按钮'''
     mybtn = [Button.inline('上一页', data='up'), Button.inline(
-        '下一页', data='next'), Button.inline('取消', data='cancel')]
+        '下一页', data='next'), Button.inline('上级', data='updir'), Button.inline('取消', data='cancel')]
     try:
-        if type(path) == list:
-            markup = path
+        if filelist:
+            markup = filelist
             newmarkup = markup[page]
             if mybtn not in newmarkup:
                 newmarkup.append(mybtn)
@@ -234,39 +238,49 @@ async def logbtn(conv, SENDER, path, msg, page):
                 newmarkup.append(mybtn)
             else:
                 newmarkup = markup
-                newmarkup.append([Button.inline('取消', data='cancel')])
+                if path == _JdDir:
+                    newmarkup.append([Button.inline('取消', data='cancel')])
+                else:
+                    newmarkup.append(
+                        [Button.inline('上级', data='updir'), Button.inline('取消', data='cancel')])
         msg = await client.edit_message(msg, '请做出您的选择：', buttons=newmarkup)
         convdata = await conv.wait_event(press_event(SENDER))
         res = bytes.decode(convdata.data)
         if res == 'cancel':
             msg = await client.edit_message(msg, '对话已取消')
             conv.cancel()
-            return None, None, None
+            return None, None, None, None
         elif res == 'next':
             page = page + 1
             if page > len(markup) - 1:
                 page = 0
-            return markup, msg, page
+            return path, msg, page, markup
         elif res == 'up':
             page = page - 1
             if page < 0:
                 page = len(markup) - 1
-            return markup, msg, page
+            return path, msg, page, markup
+        elif res == 'updir':
+            path = '/'.join(path.split('/')[:-1])
+            logger.info(path)
+            if path == '':
+                path = _JdDir
+            return path, msg, page, None
         elif os.path.isfile(path+'/'+res):
             msg = await client.edit_message(msg, '文件发送中，请注意查收')
             await conv.send_file(path+'/'+res)
             msg = await client.edit_message(msg, res+'发送成功，请查收')
             conv.cancel()
-            return None, None, None
+            return None, None, None, None
         else:
-            return path+'/'+res, msg, page
+            return path+'/'+res, msg, page, None
     except exceptions.TimeoutError:
         msg = await client.edit_message(msg, '选择已超时，本次对话已停止')
-        return None, None, None
+        return None, None, None, None
     except Exception as e:
         msg = await client.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
-        return None, None, None
+        return None, None, None, None
 
 
 async def getname(path, dir):
@@ -291,13 +305,13 @@ async def getname(path, dir):
     return names
 
 
-async def nodebtn(conv, SENDER, path: str, msg, page):
+async def nodebtn(conv, SENDER, path, msg, page, filelist):
     '''定义scripts脚本按钮'''
     mybtn = [Button.inline('上一页', data='up'), Button.inline(
-        '下一页', data='next'), Button.inline('取消', data='cancel')]
+        '下一页', data='next'), Button.inline('上级', data='updir'), Button.inline('取消', data='cancel')]
     try:
-        if type(path) == list:
-            markup = path
+        if filelist:
+            markup = filelist
             newmarkup = markup[page]
             if mybtn not in newmarkup:
                 newmarkup.append(mybtn)
@@ -317,7 +331,11 @@ async def nodebtn(conv, SENDER, path: str, msg, page):
                 newmarkup.append(mybtn)
             else:
                 newmarkup = markup
-                newmarkup.append([Button.inline('取消', data='cancel')])
+               if path == _JdDir:
+                    newmarkup.append([Button.inline('取消', data='cancel')])
+                else:
+                    newmarkup.append(
+                        [Button.inline('上级', data='updir'), Button.inline('取消', data='cancel')])
         msg = await client.edit_message(msg, '请做出您的选择：', buttons=newmarkup)
         convdata = await conv.wait_event(press_event(SENDER))
         res = bytes.decode(convdata.data)
@@ -329,12 +347,17 @@ async def nodebtn(conv, SENDER, path: str, msg, page):
             page = page + 1
             if page > len(markup) - 1:
                 page = 0
-            return markup, msg, page
+            return path, msg, page, markup
         elif res == 'up':
             page = page - 1
             if page < 0:
                 page = len(markup) - 1
-            return markup, msg, page
+            return path, msg, page, markup
+        elif res == 'updir':
+            path = '/'.join(path.split('/')[:-1])
+            if path == '':
+                path = _JdDir
+            return path, msg, page, None
         elif os.path.isfile(path+'/'+res):
             msg = await client.edit_message(msg, '脚本即将在后台运行')
             logger.info(path+'/'+res+'脚本即将在后台运行')
@@ -343,16 +366,16 @@ async def nodebtn(conv, SENDER, path: str, msg, page):
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             msg = await client.edit_message(msg, res + '在后台运行成功，请自行在程序结束后查看日志')
             conv.cancel()
-            return None, None, None
+            return None, None, None, None
         else:
-            return path+'/'+res, msg, page
+            return path+'/'+res, msg, page, None
     except exceptions.TimeoutError:
         msg = await client.edit_message(msg, '选择已超时，对话已停止')
-        return None, None, None
+        return None, None, None, None
     except Exception as e:
         msg = await client.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
-        return None, None, None
+        return None, None, None, None
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/log'))
@@ -361,10 +384,11 @@ async def mylog(event):
     SENDER = event.sender_id
     path = _LogDir
     page = 0
+    filelist = None
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
-            path, msg, page = await logbtn(conv, SENDER, path, msg, page)
+            path, msg, page, filelist = await logbtn(conv, SENDER, path, msg, page, filelist)
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/snode'))
@@ -373,10 +397,11 @@ async def mysnode(event):
     SENDER = event.sender_id
     path = _ScriptsDir
     page = 0
+    filelist = None
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
-            path, msg, page = await nodebtn(conv, SENDER, path, msg, page)
+            path, msg, page, filelist = await nodebtn(conv, SENDER, path, msg, page, filelist)
 
 
 @client.on(events.NewMessage(from_users=chat_id, pattern=r'^/getfile'))
@@ -385,10 +410,11 @@ async def mygetfile(event):
     SENDER = event.sender_id
     path = _JdDir
     page = 0
+    filelist = None
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
-            path, msg, page = await logbtn(conv, SENDER, path, msg, page)
+            path, msg, page, filelist = await logbtn(conv, SENDER, path, msg, page, filelist)
 
 
 @client.on(events.NewMessage(from_users=chat_id))
@@ -442,27 +468,27 @@ async def myfileup(event):
     SENDER = event.sender_id
     path = _JdDir
     page = 0
-    file = ""
+    filelist = None
     async with client.conversation(SENDER, timeout=60) as conv:
         msg = await conv.send_message('正在查询，请稍后')
         while path:
-            path, msg, page, file = await myedit(conv, SENDER, path, msg, page, file)
+            path, msg, page, filelist = await myedit(conv, SENDER, path, msg, page, filelist)
 
 
-async def myedit(conv, SENDER, path, msg, page, file):
-    mybtn = [Button.inline('上一页', data='up'), Button.inline(
-        '下一页', data='next'), Button.inline('取消', data='cancel')]
+async def myedit(conv, SENDER, path, msg, page, filelist):
+    mybtn = [Button.inline('上一页', data='up'), Button.inline('下一页', data='next'), Button.inline(
+        '上级', data='updir'), Button.inline('取消', data='cancel')]
     mybtn2 = [[Button.inline('上一页', data='up'), Button.inline(
         '下一页', data='next'), Button.inline('取消', data='cancel')], [Button.inline('上十页', data='up10'), Button.inline(
             '下十页', data='next10'), Button.inline('编辑', data='edit')]]
     try:
-        if type(path) == list and type(path[0][0]) == str:
-            markup = path
+        if filelist and type(filelist[0][0]) == str:
+            markup = filelist
             newmarkup = markup[page]
             msg = await client.edit_message(msg, "".join(newmarkup), buttons=mybtn2)
         else:
-            if type(path) == list:
-                markup = path
+            if filelist:
+                markup = filelist
                 newmarkup = markup[page]
                 if mybtn not in newmarkup:
                     newmarkup.append(mybtn)
@@ -478,34 +504,43 @@ async def myedit(conv, SENDER, path, msg, page, file):
                     newmarkup.append(mybtn)
                 else:
                     newmarkup = markup
-                    newmarkup.append([Button.inline('取消', data='cancel')])
+                    if path == _JdDir:
+                        newmarkup.append([Button.inline('取消', data='cancel')])
+                    else:
+                        newmarkup.append(
+                            [Button.inline('上级', data='updir'), Button.inline('取消', data='cancel')])
             msg = await client.edit_message(msg, '请做出您的选择：', buttons=newmarkup)
         convdata = await conv.wait_event(press_event(SENDER))
         res = bytes.decode(convdata.data)
         if res == 'cancel':
             msg = await client.edit_message(msg, '对话已取消')
             conv.cancel()
-            return None, None, None, None
+            return None, None, None, None, None
         elif res == 'next':
             page = page + 1
             if page > len(markup) - 1:
                 page = 0
-            return markup, msg, page, file
+            return path, msg, page,  markup
         elif res == 'up':
             page = page - 1
             if page < 0:
                 page = len(markup) - 1
-            return markup, msg, page, file
+            return path, msg, page,  markup
         elif res == 'next10':
             page = page + 10
             if page > len(markup) - 1:
                 page = 0
-            return markup, msg, page, file
+            return path, msg, page,  markup
         elif res == 'up10':
             page = page - 10
             if page < 0:
                 page = len(markup) - 1
-            return markup, msg, page, file
+            return path, msg, page,  markup
+            elif res == 'updir':
+            path = '/'.join(path.split('/')[:-1])
+            if path == '':
+                path = _JdDir
+            return path, msg, page,  None
         elif res == 'edit':
             await client.send_message(chat_id, '请复制并修改以下内容，修改完成后发回机器人，2分钟内有效')
             await client.delete_messages(chat_id, msg)
@@ -514,11 +549,11 @@ async def myedit(conv, SENDER, path, msg, page, file):
             markup[page] = resp.raw_text.split('\n')
             for a in range(len(markup[page])):
                 markup[page][a] = markup[page][a]+'\n'
-            shutil.copy(file, file+'.bak')
-            with open(file, 'w+', encoding='utf-8') as f:
+            shutil.copy(path, path+'.bak')
+            with open(path, 'w+', encoding='utf-8') as f:
                 markup = ["".join(a) for a in markup]
                 f.writelines(markup)
-            await client.send_message(chat_id, '文件已修改成功，原文件备份为'+file+'.bak')
+            await client.send_message(chat_id, '文件已修改成功，原文件备份为'+path+'.bak')
             conv.cancel()
             return None, None, None, None
         elif os.path.isfile(path+'/'+res):
@@ -527,9 +562,9 @@ async def myedit(conv, SENDER, path, msg, page, file):
                 lines = f.readlines()
             lines = split_list(lines, 15)
             page = 0
-            return lines, msg, page, path+'/'+res
+            return path+'/'+res, msg, page, lines
         else:
-            return path + '/' + res, msg, page, file
+            return path+'/'+res, msg, page, None
     except exceptions.TimeoutError:
         msg = await client.edit_message(msg, '选择已超时，本次对话已停止')
         return None, None, None, None
