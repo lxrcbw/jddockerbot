@@ -321,7 +321,7 @@ async def nodebtn(conv, SENDER, path, msg, page, filelist):
             if mybtn not in newmarkup:
                 newmarkup.append(mybtn)
         else:
-            if path == '/jd':
+            if path == _JdDir:
                 dir = ['scripts', 'diyscripts']
             else:
                 dir = os.listdir(path)
