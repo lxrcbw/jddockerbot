@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # _*_ coding:utf-8 _*_
 # time：     2021
-# newtime：  2021-04-20
-# version：  0.1.6
-# log：      新功能-返回上级目录；bot.json增加配置，<代理账号与密码>，已配置好的无需修改
+# newtime：  2021-04-25
+# version：  0.1.7
+# log：      新增：连接成功，机器人发送通知，修复：没有中文名称脚本不能识别
 # author：   https://github.com/SuMaiKaDe
 
 from telethon import TelegramClient, events, Button
@@ -17,7 +17,6 @@ import logging
 import subprocess
 import shutil
 from asyncio import exceptions
-from telethon.network import connection
 logging.basicConfig(
     format='%(asctime)s-%(name)s-%(levelname)s=> [%(funcName)s] %(message)s ', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,12 +52,17 @@ else:
 # 开启tg对话
 if proxystart:
     client = TelegramClient('bot', api_id, api_hash,
-                            proxy=proxy,connection_retries=None).start(bot_token=TOKEN)
+                            proxy=proxy, connection_retries=None).start(bot_token=TOKEN)
 else:
-    client = TelegramClient('bot', api_id, api_hash,connection_retries=None).start(bot_token=TOKEN)
+    client = TelegramClient('bot', api_id, api_hash,
+                            connection_retries=None).start(bot_token=TOKEN)
 cookiemsg = ''
 img_file = _qr
 StartCMD = bot['StartCMD']
+
+
+async def hello():
+    await client.send_message(chat_id, 'duang duang duang \n您的机器人已成功激活\n发个 /start 试试吧')
 
 
 def press_event(user_id):
@@ -292,10 +296,11 @@ async def logbtn(conv, SENDER, path, msg, page, filelist):
 async def getname(path, dir):
     names = []
     reg = r'new Env\(\'[\S]+?\'\)'
+    cname = False
     for file in dir:
         if os.path.isdir(path+'/'+file):
             names.append(file)
-        elif file.endswith('.js'):
+        elif file.endswith('.js') and file != 'jdCookie.js' and file != 'getJDCookie.js' and file != 'JD_extra_cookie.js':
             with open(path+'/'+file, 'r', encoding='utf-8') as f:
                 resdatas = f.readlines()
             for data in resdatas:
@@ -305,7 +310,11 @@ async def getname(path, dir):
                     if len(res) != 0:
                         res = res[0].split('\'')[-2]
                         names.append(res+'--->'+file)
+                        cname = True
                     break
+            if not cname:
+                names.append(file+'--->'+file)
+                cname = False
         else:
             continue
     return names
@@ -322,14 +331,14 @@ async def nodebtn(conv, SENDER, path, msg, page, filelist):
             if mybtn not in newmarkup:
                 newmarkup.append(mybtn)
         else:
-            if path == '/jd':
+            if path == _JdDir:
                 dir = ['scripts', 'own']
             else:
                 dir = os.listdir(path)
                 dir = await getname(path, dir)
             dir.sort()
             markup = [Button.inline(file.split('--->')[0], data=str(file.split('--->')[-1]))
-                      for file in dir if os.path.isdir(path+'/'+file) or re.search(r'.js$', file.split('--->')[-1])]
+                      for file in dir if os.path.isdir(path+'/'+file) or file.endswith('.js')]
             markup = split_list(markup, 3)
             if len(markup) > 30:
                 markup = split_list(markup, 30)
@@ -771,4 +780,5 @@ async def mystart(event):
     await client.send_message(chat_id, msg)
 
 with client:
+    task = client.loop.create_task(hello())
     client.loop.run_forever()
