@@ -14,11 +14,11 @@ async def myfile(event):
             markup = []
             filename = event.message.file.name
             async with jdbot.conversation(SENDER, timeout=30) as conv:
-                msg = await conv.send_message('请选择您要放入的文件夹或操作：\n')
+                msg = await conv.send_message('请选择您要放入的文件夹或操作：\n__DIY对于QL是diyscripts__\n__对于V4是OWN文件夹__')
                 markup.append([Button.inline('放入config', data=_ConfigDir), Button.inline(
                     '放入scripts', data=_ScriptsDir), Button.inline('放入DIY文件夹', data=_DiyDir)])
                 markup.append(
-                    [Button.inline('放入DIY文件夹', data='node'), Button.inline('取消', data='cancel')])
+                    [Button.inline('放入DIY并运行', data='node'), Button.inline('取消', data='cancel')])
                 msg = await jdbot.edit_message(msg, '请做出您的选择：', buttons=markup)
                 convdata = await conv.wait_event(press_event(SENDER))
                 res = bytes.decode(convdata.data)
