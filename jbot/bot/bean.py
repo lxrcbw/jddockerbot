@@ -74,9 +74,16 @@ def creat_bean_counts(csv_file):
     tb.field_names = title
     data = data[-7:]
     for line in data:
-        tb.add_row(line.split(','))
+        row = line.split(',')
+        if len(row) > len(title):
+            row = row[:len(title)]
+        elif len(row) < len(title):
+            i = len(title) - len(row)
+            for _ in range(0,i):
+                row.append(0)
+        tb.add_row(row)
     length = 172 + 100 * num
-    im = Image.new("RGB", (length, 280), (244, 244, 244))
+    im = Image.new("RGB", (length, 360), (244, 244, 244))
     dr = ImageDraw.Draw(im)
     font = ImageFont.truetype(_font, 18)
     dr.text((10, 5), str(tb), font=font, fill="#000000")
