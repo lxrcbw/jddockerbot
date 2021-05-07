@@ -1,6 +1,6 @@
 from telethon import events
 from .. import jdbot, chat_id, _JdDir
-from .utils import nodebtn
+from .utils import cmd, nodebtn
 
 
 @jdbot.on(events.NewMessage(from_users=chat_id, pattern=r'^/snode'))
@@ -14,3 +14,5 @@ async def mysnode(event):
         msg = await conv.send_message('正在查询，请稍后')
         while path:
             path, msg, page, filelist = await nodebtn(conv, SENDER, path, msg, page, filelist)
+    if filelist.startswith('CMD-->'):
+        await cmd(filelist.replace('CMD-->', ''))

@@ -2,7 +2,6 @@ from telethon import TelegramClient
 import json
 import os
 import logging
-import asyncio
 
 _JdDir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 _ConfigDir = _JdDir + '/config'
@@ -50,4 +49,4 @@ if proxystart:
 else:
     jdbot = TelegramClient('bot', api_id, api_hash,
                            connection_retries=None).start(bot_token=TOKEN)
-newloop = asyncio.new_event_loop()
+

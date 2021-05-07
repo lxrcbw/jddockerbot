@@ -3,6 +3,7 @@ from telethon import events
 from .. import jdbot, chat_id, _LogDir, _JdbotDir,logger
 from prettytable import PrettyTable
 import subprocess
+from .utils import get_beans_data
 
 IN = _LogDir + '/bean_income.csv'
 OUT = _LogDir + '/bean_outlay.csv'
@@ -15,22 +16,26 @@ _font = _JdbotDir + '/font/jet.ttf'
 async def mybean(event):
     try:
         await jdbot.send_message(chat_id, '正在查询，请稍后')
-        subprocess.check_output(
-            'jcsv', shell=True, stderr=subprocess.STDOUT)
         if len(event.raw_text.split(' ')) > 1:
             text = event.raw_text.replace('/bean ', '')
         else:
             text = None
         if text and text == 'in':
+            subprocess.check_output(
+            'jcsv', shell=True, stderr=subprocess.STDOUT)
             creat_bean_counts(IN)
             await jdbot.send_message(chat_id, '您的近日收入情况', file=_botimg)
         elif text and text == 'out':
+            subprocess.check_output(
+            'jcsv', shell=True, stderr=subprocess.STDOUT)
             creat_bean_counts(OUT)
             await jdbot.send_message(chat_id, '您的近日支出情况', file=_botimg)
         elif text and int(text):
             creat_bean_count(text)
             await jdbot.send_message(chat_id, f'您的账号{text}收支情况', file=_botimg)
         else:
+            subprocess.check_output(
+            'jcsv', shell=True, stderr=subprocess.STDOUT)
             creat_bean_counts(TOTAL)
             await jdbot.send_message(chat_id, '您的总京豆情况', file=_botimg)
     except Exception as e:
@@ -38,27 +43,16 @@ async def mybean(event):
         logger.error('something wrong,I\'m sorry'+str(e))
 
 def creat_bean_count(count):
-    files = {"BEANIN": IN, "BEANOUT": OUT, "TOTAL": TOTAL}
     tb = PrettyTable()
-    columns = []
-    with open(files["BEANIN"], 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    lines = lines[-7:]
-    for line in lines:
-        columns.append(line.split(',')[0])
-    tb.add_column('DATE', columns)
-    for key, file in files.items():
-        columns = []
-        with open(file, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-        lines = lines[-7:]
-        for line in lines:
-            columns.append(line.split(',')[int(count)])
-        tb.add_column(key, columns)
-    length = 172 + 100 * 3
-    im = Image.new("RGB", (length, 280), (244, 244, 244))
-    dr = ImageDraw.Draw(im)
+    date, counts, beanins, beanouts, beantotals, redtotals = get_beans_data(int(count))
+    tb.add_column('DATE',date)
+    tb.add_column('BEANIN',beanins)
+    tb.add_column('BEANOUT',beanouts)
+    tb.add_column('TOTAL',beantotals)
+    tb.add_column('REDPK',redtotals)
     font = ImageFont.truetype(_font, 18)
+    im = Image.new("RGB", (500, 260), (244, 244, 244))
+    dr = ImageDraw.Draw(im)
     dr.text((10, 5), str(tb), font=font, fill="#000000")
     im.save(_botimg)
 
@@ -83,7 +77,7 @@ def creat_bean_counts(csv_file):
                 row.append(0)
         tb.add_row(row)
     length = 172 + 100 * num
-    im = Image.new("RGB", (length, 360), (244, 244, 244))
+    im = Image.new("RGB", (length, 400), (244, 244, 244))
     dr = ImageDraw.Draw(im)
     font = ImageFont.truetype(_font, 18)
     dr.text((10, 5), str(tb), font=font, fill="#000000")

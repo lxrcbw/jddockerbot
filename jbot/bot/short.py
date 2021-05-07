@@ -15,7 +15,7 @@ async def shortcut(event):
     try:
         async with jdbot.conversation(SENDER, timeout=60) as conv:
             markup = [Button.inline(shortcut.split(
-                '-->')[0], data=str(shortcut.split('-->')[-1])) for shortcut in shortcuts]
+                '-->')[0], data=str(shortcut.split('-->')[-1])) for shortcut in shortcuts if '-->' in shortcut]
             markup = split_list(markup, 3)
             markup.append([Button.inline('取消', data='cancel')])
             msg = await jdbot.edit_message(msg, '请做出您的选择：', buttons=markup)
@@ -37,6 +37,20 @@ async def shortcut(event):
                 conv.cancel()
     except exceptions.TimeoutError:
         msg = await jdbot.edit_message(msg, '选择已超时，对话已停止')
+    except Exception as e:
+        await jdbot.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
+        logger.error('something wrong,I\'m sorry\n'+str(e))
+
+@jdbot.on(events.NewMessage(from_users=chat_id, pattern=r'^/b$'))
+async def shortcut(event):
+    markup = []
+    msg = await jdbot.send_message(chat_id, '正在查询您的常用命令，请稍后')
+    with open(_shortcut, 'r', encoding='utf-8') as f:
+        shortcuts = f.readlines()
+    try:
+        await jdbot.delete_messages(chat_id,msg)
+        markup = [Button.text(shortcut) for shortcut in shortcuts if '-->' not in shortcut]
+        await jdbot.send_message(chat_id, '请做出您的选择：', buttons=markup)
     except Exception as e:
         await jdbot.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))

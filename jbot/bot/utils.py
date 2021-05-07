@@ -1,16 +1,15 @@
 import os
 from telethon import events, Button
 import re
-import requests
-from .. import jdbot, chat_id, _LogDir, logger, _JdDir,_DiyScripts,_OwnDir,TOKEN,newloop,proxystart
+from .. import jdbot, chat_id, _LogDir, logger, _JdDir,_DiyScripts,_OwnDir
 import asyncio
-import subprocess
 import datetime
+bean_log = _LogDir + '/jd_bean_change/'
 
-if os.environ['JD_DIR']:
+if 'JD_DIR' in os.environ.keys():
     _DiyDir = _OwnDir
     jdcmd = 'jtask'
-elif os.environ['QL_DIR']:
+elif 'QL_DIR' in os.environ.keys():
     _DiyDir = _DiyScripts
     jdcmd = 'js'
 else:
@@ -45,22 +44,26 @@ async def backfile(file):
 def press_event(user_id):
     return events.CallbackQuery(func=lambda e: e.sender_id == user_id)
 
-
 async def cmd(cmdtext):
     '''定义执行cmd命令'''
     try:
-        msg = await jdbot.send_message(chat_id, '开始执行程序，如程序复杂，建议稍等')
-        res_bytes = subprocess.check_output(
-            cmdtext, shell=True, stderr=subprocess.STDOUT)
+        msg = await jdbot.send_message(chat_id, '开始执行命令')
+        p = await asyncio.create_subprocess_shell(
+        cmdtext, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        res_bytes,res_err = await p.communicate() 
         res = res_bytes.decode('utf-8')
         if len(res) == 0:
             await jdbot.edit_message(msg, '已执行，但返回值为空')
         elif len(res) <= 4000:
-            await jdbot.edit_message(msg, res)
+            await jdbot.delete_messages(chat_id,msg)
+            await jdbot.send_message(chat_id, res)
         elif len(res) > 4000:
-            with open(_LogDir+'/botres.log', 'w+', encoding='utf-8') as f:
+            _log = _LogDir + '/bot/'+cmdtext.split('/')[-1].split('.js')[0]+datetime.datetime.now().strftime('%H-%M-%S')+'.log'
+            with open(_log, 'w+', encoding='utf-8') as f:
                 f.write(res)
-            await jdbot.send_message(chat_id, '执行结果较长，请查看日志', file=_LogDir+'/botres.log')
+            await jdbot.delete_messages(chat_id,msg)
+            await jdbot.send_message(chat_id, '执行结果较长，请查看日志', file=_log)
+            os,os.remove(_log)
     except Exception as e:
         await jdbot.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry'+str(e))
@@ -216,12 +219,10 @@ async def nodebtn(conv, SENDER, path, msg, page, filelist):
             return path, msg, page, None
         elif os.path.isfile(path+'/'+res):
             conv.cancel()
-            msg = await jdbot.edit_message(msg, '脚本即将在后台运行')
             logger.info(path+'/'+res+'脚本即将在后台运行')
+            msg = await jdbot.edit_message(msg, res + '在后台运行成功')
             cmdtext = '{} {}/{} now'.format(jdcmd,path, res)
-            asyncio.run_coroutine_threadsafe(backcmd(cmdtext),newloop)
-            msg = await jdbot.edit_message(msg, res + '在后台运行成功，请自行在程序结束后查看日志')
-            return None, None, None, None
+            return None, None, None, 'CMD-->'+cmdtext
         else:
             return path+'/'+res, msg, page, None
     except asyncio.exceptions.TimeoutError:
@@ -232,22 +233,39 @@ async def nodebtn(conv, SENDER, path, msg, page, filelist):
         logger.error('something wrong,I\'m sorry\n'+str(e))
         return None, None, None, None
 
-def send_file(chatid,file):
-    # if HOSTAPI:
-    #     url = f'https://{HOSTAPI}/bot{TOKEN}/sendDocument?chat_id={chatid}'
-    if proxystart :
-        url = f'https://a.jdtgbot.workers.dev/bot{TOKEN}/sendDocument?chat_id={chatid}'
-    else:
-        url = f'https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={chatid}'
-    files = {'document': open(file, 'rb')}
-    requests.post(url,files=files)
+def get_beans_data(num):
+    num = int(num) - 1
+    files = os.listdir(bean_log)
+    files.sort(reverse=True)
+    dates = []
+    counts = []
+    redtotals = []
+    beantotals = []
+    beanouts = []
+    beanins = []
+    for file in files:
+        with open(bean_log+'/'+file, 'r', encoding='utf-8') as f:
+            lines = f.read()
+        date = '-'.join(file.split('-')[1:3])
+        if date in dates:
+            continue
+        count = re.compile('(?<=账号'+str(num+1)+'：)\S+')
+        beanin = re.compile(r'(?<=昨日收入：)\d+')
+        beanout = re.compile(r'(?<=昨日支出：)\d+')
+        beantotal = re.compile(r'(?<=当前京豆：)\d+')
+        redtotal = re.compile(r'(?<=当前总红包：)\d+\.\d+')
+        dates.insert(0, date)
+        counts.insert(0, count.findall(lines))
+        beanins.insert(0, beanin.findall(lines)[num])
+        beanouts.insert(0, beanout.findall(lines)[num])
+        beantotals.insert(0, beantotal.findall(lines)[num])
+        redtotals.insert(0, redtotal.findall(lines)[num])
+        if len(dates) == 7:
+            break
+    return dates, counts, beanins, beanouts, beantotals, redtotals
 
-async def backcmd(cmdtext):
-    _log = _LogDir + '/bot/'+cmdtext.split('/')[-1].split('.js')[0]+datetime.datetime.now().strftime('%H-%M-%S')+'.log'
-    res_bytes = subprocess.check_output(
-        cmdtext, shell=True, stderr=subprocess.STDOUT)
-    res = res_bytes.decode('utf-8')
-    with open(_log, 'w+', encoding='utf-8') as f:
-        f.write(res)
-    send_file(chat_id,_log)
-    os.remove(_log)
+def astm(arr):
+    _arr = []
+    for _ in arr:
+        _arr.append(int(_))
+    return _arr
