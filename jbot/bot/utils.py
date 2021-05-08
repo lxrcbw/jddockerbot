@@ -251,7 +251,7 @@ def get_beans_data(num):
             continue
         count = re.compile('(?<=账号'+str(num+1)+'：)\S+')
         beanin = re.compile(r'(?<=昨日收入：)\d+')
-        beanout = re.compile(r'(?<=昨日支出：)\d+')
+        beanout = re.compile(r'(?<=昨日支出：)\S*\d+')
         beantotal = re.compile(r'(?<=当前京豆：)\d+')
         redtotal = re.compile(r'(?<=当前总红包：)\d+\.\d+')
         dates.insert(0, date)
@@ -262,10 +262,10 @@ def get_beans_data(num):
         redtotals.insert(0, redtotal.findall(lines)[num])
         if len(dates) == 7:
             break
-    return dates, counts, beanins, beanouts, beantotals, redtotals
+    return dates, counts, astm(beanins), astm(beanouts), astm(beantotals), astm(redtotals)
 
 def astm(arr):
     _arr = []
     for _ in arr:
-        _arr.append(int(_))
+        _arr.append(int(_.replace('-','')))
     return _arr
