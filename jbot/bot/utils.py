@@ -11,7 +11,7 @@ if 'JD_DIR' in os.environ.keys():
     jdcmd = 'jtask'
 elif 'QL_DIR' in os.environ.keys():
     _DiyDir = _DiyScripts
-    jdcmd = 'js'
+    jdcmd = 'task'
 else:
     _DiyDir = None
     jdcmd = 'node'
