@@ -13,7 +13,7 @@ if 'JD_DIR' in os.environ.keys():
 elif 'QL_DIR' in os.environ.keys():
     _DiyDir = _DiyScripts
     jdcmd = 'task'
-    bean_log = _LogDir + '/whyour_jd_bean_change/'
+    bean_log = _LogDir + '/chinnkarahoi_jd_bean_change/'
 else:
     _DiyDir = None
     jdcmd = 'node'
