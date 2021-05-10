@@ -9,9 +9,11 @@ bean_log = _LogDir + '/jd_bean_change/'
 if 'JD_DIR' in os.environ.keys():
     _DiyDir = _OwnDir
     jdcmd = 'jtask'
+    bean_log = _LogDir + '/jd_bean_change/'
 elif 'QL_DIR' in os.environ.keys():
     _DiyDir = _DiyScripts
     jdcmd = 'task'
+    bean_log = _LogDir + '/whyour_jd_bean_change/'
 else:
     _DiyDir = None
     jdcmd = 'node'
