@@ -16,10 +16,10 @@ async def myfile(event):
             async with jdbot.conversation(SENDER, timeout=30) as conv:
                 msg = await conv.send_message('请选择您要放入的文件夹或操作：\n')
                 markup.append([Button.inline('放入config', data=_ConfigDir), Button.inline(
-                    '放入scripts', data=_ScriptsDir), Button.inline('放入DIY文件夹', data=_DiyDir)])
+                    '放入scripts', data=_ScriptsDir), Button.inline('放入OWN文件夹', data=_DiyDir)])
                 markup.append(
-                    [Button.inline('放入DIY并运行', data='node'), Button.inline('取消', data='cancel')])
-                msg = await jdbot.edit_message(msg, '请选择您要放入的文件夹或操作：\n__DIY对于QL是diyscripts__\n__对于V4是OWN文件夹__', buttons=markup)
+                    [Button.inline('放入scripts并运行', data='node1'),Button.inline('放入DIY并运行', data='node'), Button.inline('取消', data='cancel')])
+                msg = await jdbot.edit_message(msg, '请选择您要放入的文件夹或操作：\n__OWN文件夹仅对V4有效__', buttons=markup)
                 convdata = await conv.wait_event(press_event(SENDER))
                 res = bytes.decode(convdata.data)
                 if res == 'cancel':
@@ -33,16 +33,23 @@ async def myfile(event):
                         cmdtext, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                     await jdbot.edit_message(msg, '脚本已保存到DIY文件夹，并成功在后台运行，请稍后自行查看日志')
                     conv.cancel()
+                elif res == 'node1':
+                    await backfile(_ScriptsDir+'/'+filename)
+                    await jdbot.download_media(event.message, _ScriptsDir)
+                    cmdtext = '{} {}/{} now'.format(jdcmd, _ScriptsDir, filename)
+                    subprocess.Popen(
+                        cmdtext, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    await jdbot.edit_message(msg, '脚本已保存到scripts文件夹，并成功在后台运行，请稍后自行查看日志')
+                    conv.cancel()
                 else:
                     await backfile(res+'/'+filename)
                     await jdbot.download_media(event.message, res)
                     await jdbot.edit_message(msg, filename+'已保存到'+res+'文件夹')
-            if filename == 'crontab.list':
+            if filename == 'crontab.list' and _DiyDir:
                 cmdtext = 'crontab '+res+'/'+filename
                 subprocess.Popen(
                     cmdtext, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 await jdbot.edit_message(msg, '定时文件已保存，并更新')
-                conv.cancel()
     except exceptions.TimeoutError:
         msg = await jdbot.send_message(chat_id, '选择已超时，对话已停止')
     except Exception as e:

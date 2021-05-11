@@ -10,7 +10,7 @@ if 'JD_DIR' in os.environ.keys():
     _DiyDir = _OwnDir
     jdcmd = 'jtask'
 elif 'QL_DIR' in os.environ.keys():
-    _DiyDir = _DiyScripts
+    _DiyDir = None
     jdcmd = 'task'
     dirs = os.listdir(_LogDir)
     for mydir in dirs:
