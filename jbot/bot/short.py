@@ -49,7 +49,7 @@ async def shortcut(event):
         shortcuts = f.readlines()
     try:
         await jdbot.delete_messages(chat_id,msg)
-        markup = [Button.text(shortcut) for shortcut in shortcuts if '-->' not in shortcut]
+        markup = [Button.text(shortcut,single_use=True) for shortcut in shortcuts if '-->' not in shortcut]
         await jdbot.send_message(chat_id, '请做出您的选择：', buttons=markup)
     except Exception as e:
         await jdbot.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))

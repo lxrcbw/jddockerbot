@@ -9,11 +9,14 @@ bean_log = _LogDir + '/jd_bean_change/'
 if 'JD_DIR' in os.environ.keys():
     _DiyDir = _OwnDir
     jdcmd = 'jtask'
-    bean_log = _LogDir + '/jd_bean_change/'
 elif 'QL_DIR' in os.environ.keys():
     _DiyDir = _DiyScripts
     jdcmd = 'task'
-    bean_log = _LogDir + '/chinnkarahoi_jd_bean_change/'
+    dirs = os.listdir(_LogDir)
+    for mydir in dirs:
+        if 'jd_bean_change' in mydir:
+            bean_log = _LogDir + '/jd_bean_change/'
+            break
 else:
     _DiyDir = None
     jdcmd = 'node'
@@ -264,7 +267,7 @@ def get_beans_data(num):
         redtotals.insert(0, redtotal.findall(lines)[num])
         if len(dates) == 7:
             break
-    return dates, counts, astm(beanins), astm(beanouts), astm(beantotals), astm(redtotals)
+    return dates, counts, astm(beanins), astm(beanouts), astm(beantotals), redtotals
 
 def astm(arr):
     _arr = []

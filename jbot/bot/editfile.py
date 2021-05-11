@@ -21,6 +21,7 @@ async def myfileup(event):
             with open(text,'r',encoding='utf-8') as f:
                 lines = f.readlines()
                 filelist = split_list(lines, 15)
+                path = text
         except Exception as e:
             await jdbot.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
     elif text and os.path.isdir(text):
