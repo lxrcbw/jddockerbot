@@ -15,7 +15,7 @@ elif 'QL_DIR' in os.environ.keys():
     dirs = os.listdir(_LogDir)
     for mydir in dirs:
         if 'jd_bean_change' in mydir:
-            bean_log = _LogDir + '/jd_bean_change/'
+            bean_log = _LogDir +'/'+ mydir
             break
 else:
     _DiyDir = None
