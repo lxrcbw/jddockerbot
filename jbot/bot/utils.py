@@ -5,7 +5,7 @@ from .. import jdbot, chat_id, _LogDir, logger, _JdDir,_DiyScripts,_OwnDir
 import asyncio
 import datetime
 bean_log = _LogDir + '/jd_bean_change/'
-
+V4, QL= False,False
 if 'JD_DIR' in os.environ.keys():
     V4 = True
     jdcmd = 'jtask'
