@@ -182,7 +182,7 @@ async def nodebtn(conv, SENDER, path, msg, page, filelist):
         else:
             if path == _JdDir and V4:
                 dir = ['scripts', _OwnDir.split('/')[-1]]
-            elif path == _JdDir and Ql:
+            elif path == _JdDir and QL:
                 dir =['scripts']
             else:
                 dir = os.listdir(path)
