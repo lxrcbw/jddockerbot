@@ -7,10 +7,10 @@ import datetime
 bean_log = _LogDir + '/jd_bean_change/'
 
 if 'JD_DIR' in os.environ.keys():
-    _DiyDir = _OwnDir
+    V4 = True
     jdcmd = 'jtask'
 elif 'QL_DIR' in os.environ.keys():
-    _DiyDir = None
+    QL = True
     jdcmd = 'task'
     dirs = os.listdir(_LogDir)
     for mydir in dirs:
@@ -180,8 +180,10 @@ async def nodebtn(conv, SENDER, path, msg, page, filelist):
             if mybtn not in newmarkup:
                 newmarkup.append(mybtn)
         else:
-            if path == _JdDir:
-                dir = ['scripts', _DiyDir.split('/')[-1]]
+            if path == _JdDir and V4:
+                dir = ['scripts', _OwnDir.split('/')[-1]]
+            elif path == _JdDir and Ql:
+                dir =['scripts']
             else:
                 dir = os.listdir(path)
                 dir = await getname(path, dir)
