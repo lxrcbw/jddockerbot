@@ -14,5 +14,5 @@ async def mysnode(event):
         msg = await conv.send_message('正在查询，请稍后')
         while path:
             path, msg, page, filelist = await nodebtn(conv, SENDER, path, msg, page, filelist)
-    if filelist.startswith('CMD-->'):
+    if filelist and filelist.startswith('CMD-->'):
         await cmd(filelist.replace('CMD-->', ''))
