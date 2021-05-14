@@ -8,9 +8,11 @@ bean_log = _LogDir + '/jd_bean_change/'
 V4, QL= False,False
 if 'JD_DIR' in os.environ.keys():
     V4 = True
+    _DiyDir = _OwnDir
     jdcmd = 'jtask'
 elif 'QL_DIR' in os.environ.keys():
     QL = True
+    _DiyDir = None
     jdcmd = 'task'
     dirs = os.listdir(_LogDir)
     for mydir in dirs:
