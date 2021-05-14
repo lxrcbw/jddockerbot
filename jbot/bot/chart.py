@@ -2,9 +2,9 @@ from telethon import events
 from .. import jdbot, chat_id, _LogDir, logger
 import os
 import re
+from .utils import bean_log
 from ..bot.quickchart import QuickChart
 
-bean_log = _LogDir + '/jd_bean_change/'
 _botimg = _LogDir + '/bot/bean.jpeg'
 
 
