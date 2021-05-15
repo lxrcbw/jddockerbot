@@ -16,7 +16,7 @@
     - 执行`pip3 install telethon python-socks[asyncio] pillow qrcode requests prettytable`
     - 或者下载requirements.txt `pip3 install -r requirements.txt`
     - ~~rebot.sh 用于杀死原bot进程，后台启动新进程，建议直接环境搭建好后直接 `bash /jd/config/rebot.sh`~~
-    - 下载jbot文件夹 放在、/jd或/ql目录下，下载config/bot.json放在config下，在jd或ql目录下运行 `nohup python3 -m jbot >/jd/bot/1.log 2>&1 &`
+    - 下载jbot文件夹 放在、/jd或/ql目录下，下载config/bot.json放在config下，在jd或ql目录下运行 `nohup python3 -m jbot >/dev/null 2>&1 &`
     - 如果需要更换机器人token，需要将bot.session删除后，重新运行 ~~`bash /jd/config/rebot.sh`~~
 ***
 ## 主要实现功能：
