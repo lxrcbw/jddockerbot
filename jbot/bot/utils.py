@@ -85,7 +85,7 @@ async def cmd(cmdtext):
                 f.write(res)
             await jdbot.delete_messages(chat_id, msg)
             await jdbot.send_message(chat_id, '执行结果较长，请查看日志', file=_log)
-            os, os.remove(_log)
+            os.remove(_log)
     except Exception as e:
         await jdbot.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry'+str(e))
