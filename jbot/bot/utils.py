@@ -1,27 +1,40 @@
 import os
 from telethon import events, Button
 import re
-from .. import jdbot, chat_id, _LogDir, logger, _JdDir,_DiyScripts,_OwnDir
+from .. import jdbot, chat_id, _LogDir, logger, _JdDir, _OwnDir, _ConfigDir
 import asyncio
 import datetime
+
 bean_log = _LogDir + '/jd_bean_change/'
-V4, QL= False,False
+
+V4, QL = False, False
 if 'JD_DIR' in os.environ.keys():
     V4 = True
+    _ConfigFile = _ConfigDir+'/config.sh'
     _DiyDir = _OwnDir
     jdcmd = 'jtask'
 elif 'QL_DIR' in os.environ.keys():
     QL = True
+    _ConfigFile = _JdDir+'/db/cookie.db'
     _DiyDir = None
     jdcmd = 'task'
     dirs = os.listdir(_LogDir)
     for mydir in dirs:
         if 'jd_bean_change' in mydir:
-            bean_log = _LogDir +'/'+ mydir
+            bean_log = _LogDir + '/' + mydir
             break
 else:
     _DiyDir = None
     jdcmd = 'node'
+
+ckreg = re.compile(r'pt_key=\S*;pt_pin=\S*;')
+with open(_ConfigFile, 'r', encoding='utf-8') as f:
+    lines = f.read()
+cookies = ckreg.findall(lines)
+for ck in cookies:
+    if ck == 'pt_key=xxxxxxxxxx;pt_pin=xxxx;':
+        cookies.remove(ck)
+        break
 
 
 def split_list(datas, n, row: bool = True):
@@ -51,26 +64,28 @@ async def backfile(file):
 def press_event(user_id):
     return events.CallbackQuery(func=lambda e: e.sender_id == user_id)
 
+
 async def cmd(cmdtext):
     '''定义执行cmd命令'''
     try:
         msg = await jdbot.send_message(chat_id, '开始执行命令')
         p = await asyncio.create_subprocess_shell(
-        cmdtext, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-        res_bytes,res_err = await p.communicate() 
+            cmdtext, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        res_bytes, res_err = await p.communicate()
         res = res_bytes.decode('utf-8')
         if len(res) == 0:
             await jdbot.edit_message(msg, '已执行，但返回值为空')
         elif len(res) <= 4000:
-            await jdbot.delete_messages(chat_id,msg)
+            await jdbot.delete_messages(chat_id, msg)
             await jdbot.send_message(chat_id, res)
         elif len(res) > 4000:
-            _log = _LogDir + '/bot/'+cmdtext.split('/')[-1].split('.js')[0]+datetime.datetime.now().strftime('%H-%M-%S')+'.log'
+            _log = _LogDir + '/bot/'+cmdtext.split('/')[-1].split(
+                '.js')[0]+datetime.datetime.now().strftime('%H-%M-%S')+'.log'
             with open(_log, 'w+', encoding='utf-8') as f:
                 f.write(res)
-            await jdbot.delete_messages(chat_id,msg)
+            await jdbot.delete_messages(chat_id, msg)
             await jdbot.send_message(chat_id, '执行结果较长，请查看日志', file=_log)
-            os,os.remove(_log)
+            os, os.remove(_log)
     except Exception as e:
         await jdbot.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry'+str(e))
@@ -185,7 +200,7 @@ async def nodebtn(conv, SENDER, path, msg, page, filelist):
             if path == _JdDir and V4:
                 dir = ['scripts', _OwnDir.split('/')[-1]]
             elif path == _JdDir and QL:
-                dir =['scripts']
+                dir = ['scripts']
             else:
                 dir = os.listdir(path)
                 dir = await getname(path, dir)
@@ -230,7 +245,7 @@ async def nodebtn(conv, SENDER, path, msg, page, filelist):
             conv.cancel()
             logger.info(path+'/'+res+'脚本即将在后台运行')
             msg = await jdbot.edit_message(msg, res + '在后台运行成功')
-            cmdtext = '{} {}/{} now'.format(jdcmd,path, res)
+            cmdtext = '{} {}/{} now'.format(jdcmd, path, res)
             return None, None, None, 'CMD-->'+cmdtext
         else:
             return path+'/'+res, msg, page, None
@@ -241,40 +256,3 @@ async def nodebtn(conv, SENDER, path, msg, page, filelist):
         msg = await jdbot.edit_message(msg, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry\n'+str(e))
         return None, None, None, None
-
-def get_beans_data(num):
-    num = int(num) - 1
-    files = os.listdir(bean_log)
-    files.sort(reverse=True)
-    dates = []
-    counts = []
-    redtotals = []
-    beantotals = []
-    beanouts = []
-    beanins = []
-    for file in files:
-        with open(bean_log+'/'+file, 'r', encoding='utf-8') as f:
-            lines = f.read()
-        date = '-'.join(file.split('-')[1:3])
-        if date in dates:
-            continue
-        count = re.compile('(?<=账号'+str(num+1)+'：)\S+')
-        beanin = re.compile(r'(?<=昨日收入：)\d+')
-        beanout = re.compile(r'(?<=昨日支出：)\S*\d+')
-        beantotal = re.compile(r'(?<=当前京豆：)\d+')
-        redtotal = re.compile(r'(?<=当前总红包：)\d+\.\d+')
-        dates.insert(0, date)
-        counts.insert(0, count.findall(lines))
-        beanins.insert(0, beanin.findall(lines)[num])
-        beanouts.insert(0, beanout.findall(lines)[num])
-        beantotals.insert(0, beantotal.findall(lines)[num])
-        redtotals.insert(0, redtotal.findall(lines)[num])
-        if len(dates) == 7:
-            break
-    return dates, counts, astm(beanins), astm(beanouts), astm(beantotals), redtotals
-
-def astm(arr):
-    _arr = []
-    for _ in arr:
-        _arr.append(int(_.replace('-','')))
-    return _arr

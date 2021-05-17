@@ -3,8 +3,7 @@ from telethon import events
 from .. import jdbot, chat_id, _LogDir, _JdbotDir,logger
 from prettytable import PrettyTable
 import subprocess
-from .utils import get_beans_data
-
+from .beandata import get_bean_data
 IN = _LogDir + '/bean_income.csv'
 OUT = _LogDir + '/bean_outlay.csv'
 TOTAL = _LogDir + '/bean_total.csv'
@@ -31,8 +30,12 @@ async def mybean(event):
             creat_bean_counts(OUT)
             await jdbot.send_message(chat_id, '您的近日支出情况', file=_botimg)
         elif text and int(text):
-            creat_bean_count(text)
-            await jdbot.send_message(chat_id, f'您的账号{text}收支情况', file=_botimg)
+            beanin, beanout, beanstotal,date = get_bean_data(int(text))
+            if not beanout:
+                await jdbot.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(beanin))
+            else:
+                creat_bean_count(date,beanin, beanout, beanstotal[1:])
+                await jdbot.send_message(chat_id, f'您的账号{text}收支情况', file=_botimg)
         else:
             subprocess.check_output(
             'jcsv', shell=True, stderr=subprocess.STDOUT)
@@ -42,20 +45,17 @@ async def mybean(event):
         await jdbot.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(e))
         logger.error('something wrong,I\'m sorry'+str(e))
 
-def creat_bean_count(count):
+def creat_bean_count(date,beansin,beansout,beanstotal):
     tb = PrettyTable()
-    date, counts, beanins, beanouts, beantotals, redtotals = get_beans_data(int(count))
     tb.add_column('DATE',date)
-    tb.add_column('BEANIN',beanins)
-    tb.add_column('BEANOUT',beanouts)
-    tb.add_column('TOTAL',beantotals)
-    tb.add_column('REDPK',redtotals)
+    tb.add_column('BEANIN',beansin)
+    tb.add_column('BEANOUT',beansout)
+    tb.add_column('TOTAL',beanstotal)
     font = ImageFont.truetype(_font, 18)
     im = Image.new("RGB", (500, 260), (244, 244, 244))
     dr = ImageDraw.Draw(im)
     dr.text((10, 5), str(tb), font=font, fill="#000000")
     im.save(_botimg)
-
 
 def creat_bean_counts(csv_file):
     with open(csv_file, 'r', encoding='utf-8') as f:

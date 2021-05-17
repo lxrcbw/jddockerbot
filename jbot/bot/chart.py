@@ -1,12 +1,8 @@
 from telethon import events
 from .. import jdbot, chat_id, _LogDir, logger
-import os
-import re
-from .utils import bean_log
 from ..bot.quickchart import QuickChart
-
+from .beandata import get_bean_data
 _botimg = _LogDir + '/bot/bean.jpeg'
-
 
 @jdbot.on(events.NewMessage(chats=chat_id, pattern=r'^/chart'))
 async def mybean(event):
@@ -17,11 +13,13 @@ async def mybean(event):
         else:
             text = None
         if text and int(text):
-            date, counts, beanins, beanouts, beantotals, redtotals = get_beans_data(
-                int(text))
-            creat_chart(date, counts[0][0], beanins,
-                        beanouts, beantotals, redtotals[-1])
-            await jdbot.send_message(chat_id, f'您的账号{text}收支情况', file=_botimg)
+            beanin, beanout, beanstotal, date = get_bean_data(int(text))
+            if not beanout:
+                await jdbot.send_message(chat_id, 'something wrong,I\'m sorry\n'+str(beanin))
+            else:
+                creat_chart(date, '账号'+str(text),
+                            beanin, beanout, beanstotal[1:])
+                await jdbot.send_message(chat_id, f'您的账号{text}收支情况', file=_botimg)
         else:
             await jdbot.send_message(chat_id, '请正确使用命令\n/chart n n为第n个账号')
     except Exception as e:
@@ -29,46 +27,7 @@ async def mybean(event):
         logger.error('something wrong,I\'m sorry'+str(e))
 
 
-def get_beans_data(num):
-    num = int(num) - 1
-    files = os.listdir(bean_log)
-    files.sort(reverse=True)
-    dates = []
-    counts = []
-    redtotals = []
-    beantotals = []
-    beanouts = []
-    beanins = []
-    for file in files:
-        with open(bean_log+'/'+file, 'r', encoding='utf-8') as f:
-            lines = f.read()
-        date = '-'.join(file.split('-')[1:3])
-        if date in dates:
-            continue
-        count = re.compile('(?<=账号'+str(num+1)+'：)\S+')
-        beanin = re.compile(r'(?<=昨日收入：)\d+')
-        beanout = re.compile(r'(?<=昨日支出：)\S*\d+')
-        beantotal = re.compile(r'(?<=当前京豆：)\d+')
-        redtotal = re.compile(r'(?<=当前总红包：)\d+\.\d+')
-        dates.insert(0, date)
-        counts.insert(0, count.findall(lines))
-        beanins.insert(0, beanin.findall(lines)[num])
-        beanouts.insert(0, beanout.findall(lines)[num])
-        beantotals.insert(0, beantotal.findall(lines)[num])
-        redtotals.insert(0, redtotal.findall(lines)[num])
-        if len(dates) == 7:
-            break
-    return dates, counts, astm(beanins), astm(beanouts), astm(beantotals), redtotals
-
-
-def astm(arr):
-    _arr = []
-    for _ in arr:
-        _arr.append(int(_.replace('-', '')))
-    return _arr
-
-
-def creat_chart(xdata, title, bardata, bardata2, linedate, otitle):
+def creat_chart(xdata, title, bardata, bardata2, linedate):
     qc = QuickChart()
     qc.background_color = '#fff'
     qc.width = "1000"
@@ -135,7 +94,7 @@ def creat_chart(xdata, title, bardata, bardata2, linedate, otitle):
             },
             "title": {
                 "display": True,
-                "text": title + "   IN OUT AND TOTAL",
+                "text": title + "   收支情况",
                 "fontSize": 24,
             },
             "scales": {
