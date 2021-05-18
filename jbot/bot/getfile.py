@@ -50,7 +50,7 @@ async def myfile(event):
                     await backfile(res+'/'+filename)
                     await jdbot.download_media(event.message, res)
                     await jdbot.edit_message(msg, filename+'已保存到'+res+'文件夹')
-            if filename == 'crontab.list' and _DiyDir:
+            if filename == 'crontab.list' and V4:
                 cmdtext = 'crontab '+res+'/'+filename
                 subprocess.Popen(
                     cmdtext, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

@@ -15,7 +15,7 @@ if 'JD_DIR' in os.environ.keys():
     jdcmd = 'jtask'
 elif 'QL_DIR' in os.environ.keys():
     QL = True
-    _ConfigFile = _JdDir+'/db/cookie.db'
+    _ConfigFile = _ConfigDir+'/cookie.sh'
     _DiyDir = None
     jdcmd = 'task'
     dirs = os.listdir(_LogDir)
