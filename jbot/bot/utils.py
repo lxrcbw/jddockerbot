@@ -6,7 +6,7 @@ import asyncio
 import datetime
 
 bean_log = _LogDir + '/jd_bean_change/'
-
+_ConfigFile = _ConfigDir+'/config.sh'
 V4, QL = False, False
 if 'JD_DIR' in os.environ.keys():
     V4 = True
