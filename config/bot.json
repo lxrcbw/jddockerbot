@@ -10,7 +10,7 @@
     "api_hash": "ASDFAWEFADSFAWEFDSFASFD",
     "//proxy": "↓↓↓  使用代理改成true，不使用下方带proxy的不用动  ↓↓↓",
     "proxy": false,
-    "//proxy_type": "↓↓↓  socks5或者http  ↓↓↓",
+    "//proxy_type": "↓↓↓  socks5 或者 http 或者 MTProxy ↓↓↓",
     "proxy_type": "socks5",
     "//proxy_add": "↓↓↓  代理IP地址例如：192.168.99.100  ↓↓↓",
     "proxy_add": "192.168.99.100",
