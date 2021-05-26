@@ -40,6 +40,10 @@ if 'proxy_user' in bot.keys() and bot['proxy_user'] != "代理的username,有则
         'port': bot['proxy_port'],
         'username': bot['proxy_user'],
         'password': bot['proxy_password']}
+
+elif bot['proxy_type'] == "MTProxy":
+    proxy = (bot['proxy_add'], bot['proxy_port'], bot['proxy_secret'])
+
 else:
     proxy = (bot['proxy_type'], bot['proxy_add'], bot['proxy_port'])
 # 开启tg对话
