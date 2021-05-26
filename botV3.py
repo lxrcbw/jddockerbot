@@ -6,7 +6,7 @@
 # log：      新增：连接成功，机器人发送通知，修复：没有中文名称脚本不能识别
 # author：   https://github.com/SuMaiKaDe
 
-from telethon import TelegramClient, events, Button
+from telethon import TelegramClient, events, Button, connection
 import requests
 import re
 import json
@@ -39,6 +39,8 @@ TOKEN = bot['bot_token']
 api_id = bot['api_id']
 api_hash = bot['api_hash']
 proxystart = bot['proxy']
+proxyType = bot['proxy_type']
+connectionType = connection.ConnectionTcpMTProxyRandomizedIntermediate if proxyType == "MTProxy" else connection.ConnectionTcpFull
 if 'proxy_user' in bot.keys() and bot['proxy_user'] != "代理的username,有则填写，无则不用动":
     proxy = {
         'proxy_type': bot['proxy_type'],
@@ -46,11 +48,13 @@ if 'proxy_user' in bot.keys() and bot['proxy_user'] != "代理的username,有则
         'port': bot['proxy_port'],
         'username': bot['proxy_user'],
         'password': bot['proxy_password']}
+elif proxyType == "MTProxy":
+    proxy = (bot['proxy_add'], bot['proxy_port'], bot['proxy_secret'])
 else:
     proxy = (bot['proxy_type'], bot['proxy_add'], bot['proxy_port'])
 # 开启tg对话
 if proxystart:
-    client = TelegramClient('bot', api_id, api_hash,
+    client = TelegramClient('bot', api_id, api_hash,connection=connectionType,
                             proxy=proxy, connection_retries=None).start(bot_token=TOKEN)
 else:
     client = TelegramClient('bot', api_id, api_hash,
